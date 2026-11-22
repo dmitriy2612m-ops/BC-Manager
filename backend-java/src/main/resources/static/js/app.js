@@ -62,6 +62,14 @@ const logoutBtn = document.getElementById('logout-btn');
 const nav = document.getElementById('sidebar-nav');
 const sidebar = document.getElementById('sidebar');
 const sidebarToggle = document.getElementById('sidebar-toggle');
+const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+
+function setSidebarOpen(open) {
+  sidebar.classList.toggle('open', open);
+  if (sidebarBackdrop) {
+    sidebarBackdrop.hidden = !open;
+  }
+}
 
 /** Текущий активный маршрут (нужен для защиты от гонок при быстром клике). */
 let currentRoute = null;
@@ -183,7 +191,7 @@ async function renderRoute(name, context) {
     link.classList.toggle('active', link.dataset.route === name);
   });
   if (sidebar.classList.contains('open')) {
-    sidebar.classList.remove('open');
+    setSidebarOpen(false);
   }
 
   viewRoot.innerHTML = '';
@@ -272,7 +280,17 @@ window.addEventListener('bc:unauthorized', () => {
 logoutBtn.addEventListener('click', logout);
 
 sidebarToggle?.addEventListener('click', () => {
-  sidebar.classList.toggle('open');
+  setSidebarOpen(!sidebar.classList.contains('open'));
+});
+
+sidebarBackdrop?.addEventListener('click', () => {
+  setSidebarOpen(false);
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && sidebar.classList.contains('open')) {
+    setSidebarOpen(false);
+  }
 });
 
 initModal();
