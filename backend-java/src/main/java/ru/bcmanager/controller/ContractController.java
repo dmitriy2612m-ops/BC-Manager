@@ -48,13 +48,20 @@ public class ContractController {
      * @param contractService сервис договоров
      * @param tenantService   сервис арендаторов
      * @param mapper          преобразователь в DTO
+     * @param userRepository  репозиторий пользователей (автор договора)
      */
     public ContractController(
-            ContractService contractService, TenantService tenantService, DtoMapper mapper) {
+            ContractService contractService,
+            TenantService tenantService,
+            DtoMapper mapper,
+            ru.bcmanager.repository.UserRepository userRepository) {
         this.contractService = contractService;
         this.tenantService = tenantService;
         this.mapper = mapper;
+        this.userRepository = userRepository;
     }
+
+    private final ru.bcmanager.repository.UserRepository userRepository;
 
     /**
      * Список договоров с фильтрами.
@@ -147,15 +154,20 @@ public class ContractController {
     @PostMapping
     @Operation(summary = "Оформить договор аренды")
     public ResponseEntity<ContractDtos.ContractSummary> create(
-            @Valid @RequestBody ContractDtos.CreateContractRequest request) {
+            @Valid @RequestBody ContractDtos.CreateContractRequest request,
+            java.security.Principal principal) {
         Tenant tenant = tenantService.findById(request.tenantId());
+        ru.bcmanager.domain.User author = principal == null
+                ? null
+                : userRepository.findByUsername(principal.getName()).orElse(null);
         LeaseContract saved = contractService.create(
                 request.contractNumber(),
                 tenant,
                 request.premisesId(),
                 request.startDate(),
                 request.endDate(),
-                request.activate());
+                request.activate(),
+                author);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(mapper.toContractSummary(saved));
     }

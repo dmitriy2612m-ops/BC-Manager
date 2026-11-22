@@ -167,7 +167,7 @@ export async function renderPremises(root, { navigate, context } = {}) {
   const matchForm = root.querySelector('#match-form');
   const today = todayIso();
   matchForm.elements.namedItem('startDate').value = today;
-  matchForm.elements.namedItem('endDate').value = addDaysIso(today, 365);
+  matchForm.elements.namedItem('endDate').value = addDaysIso(today, 364);
 
   // Предзаполнение из «Умного подбора» (переход из экрана договоров в Сессии 8).
   if (context?.matchCriteria) {

@@ -39,6 +39,22 @@ const STATUS_OPTIONS = [
   ['TERMINATED', 'Расторгнут'],
 ];
 
+/**
+ * Сдвинуть ISO-дату на один календарный год (29.02 → 28.02).
+ *
+ * @param {string} isoDate исходная дата `YYYY-MM-DD`
+ * @returns {string} дата через год
+ */
+function addYearIso(isoDate) {
+  const [year, month, day] = String(isoDate).split('-').map(Number);
+  const target = new Date(year + 1, month - 1, 1);
+  const lastDay = new Date(year + 1, month, 0).getDate();
+  target.setDate(Math.min(day, lastDay));
+  const mm = String(target.getMonth() + 1).padStart(2, '0');
+  const dd = String(target.getDate()).padStart(2, '0');
+  return `${target.getFullYear()}-${mm}-${dd}`;
+}
+
 /** Состояние экрана: фильтр по статусу и справочники для мастера. */
 const state = {
   filterStatus: '',
@@ -363,7 +379,9 @@ async function openContractWizard(root, { draft, tenantId } = {}) {
 
   const activeTenants = tenants.filter((row) => row.active !== false);
   const startDate = draft?.startDate || todayIso();
-  const endDate = draft?.endDate || addDaysIso(startDate, 365);
+  // Год аренды: с даты начала по тот же день следующего года минус один день
+  // (дата окончания включительна — 12 платежей, а не 13).
+  const endDate = draft?.endDate || addDaysIso(addYearIso(startDate), -1);
   const defaultNumber = `BC-${new Date().getFullYear()}-${String(
     Math.floor(Math.random() * 9000) + 1000,
   )}`;

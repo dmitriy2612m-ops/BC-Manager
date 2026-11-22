@@ -120,6 +120,7 @@ public interface LeaseContractRepository extends JpaRepository<LeaseContract, Lo
      * @param id идентификатор договора
      * @return договор, если найден
      */
-    @Query("SELECT c FROM LeaseContract c JOIN FETCH c.premises JOIN FETCH c.tenant WHERE c.id = :id")
+    @Query("SELECT c FROM LeaseContract c JOIN FETCH c.premises JOIN FETCH c.tenant"
+            + " LEFT JOIN FETCH c.createdBy WHERE c.id = :id")
     Optional<LeaseContract> findByIdWithDetails(@Param("id") Long id);
 }

@@ -12,59 +12,59 @@
      контраст элементов управления и границ >= 3:1
      ------------------------------------------------------------ */
 
-  /* Основной акцентный цвет (деловой тёмно-синий Navy) */
-  --color-accent: #1e3a5f;
-  --color-accent-hover: #162c48;
-  --color-accent-active: #0f1f33;
-  --color-accent-soft: #eaf0f8;
-  --color-accent-soft-border: #c6d7ec;
-  --color-accent-contrast: #ffffff;
+  /* Основной акцентный цвет (тёплый кофейно-коричневый) */
+  --color-accent: #6f4e37;
+  --color-accent-hover: #5c3f2c;
+  --color-accent-active: #4a3223;
+  --color-accent-soft: #f3e9dd;
+  --color-accent-soft-border: #e0ccb4;
+  --color-accent-contrast: #fffaf3;
 
-  /* Фоновые поверхности и слои */
-  --color-bg: #f8fafc;
-  --color-surface: #ffffff;
-  --color-surface-subtle: #f1f5f9;
-  --color-surface-hover: #f1f5f9;
+  /* Фоновые поверхности и слои (молочный и бежевый) */
+  --color-bg: #f7f1e8;
+  --color-surface: #fffcf7;
+  --color-surface-subtle: #f3ebdf;
+  --color-surface-hover: #f5ede2;
 
   /* Границы и разделители */
-  --color-border: #e2e8f0;
-  --color-border-strong: #cbd5e1;
-  --color-border-hover: #94a3b8;
+  --color-border: #e8dccb;
+  --color-border-strong: #d6c4aa;
+  --color-border-hover: #b49c7e;
 
-  /* Типографические токены */
-  --color-text: #0f172a;           /* Контраст к фону 13.8:1 */
-  --color-text-muted: #475569;     /* Контраст к фону 5.8:1 */
-  --color-text-subtle: #64748b;    /* Контраст к фону 4.6:1 */
-  --color-text-inverse: #ffffff;
+  /* Типографические токены (тёмный шоколад) */
+  --color-text: #3a2a1f;           /* Контраст к фону ≈ 12.9:1 */
+  --color-text-muted: #6a5242;     /* Контраст к фону ≈ 6.6:1 */
+  --color-text-subtle: #7d6553;    /* Контраст к фону ≈ 5.0:1 */
+  --color-text-inverse: #fffaf3;
 
   /* Индикатор фокуса (better-accessibility) */
-  --color-focus: #2563eb;
+  --color-focus: #a8652f;
   --focus-ring: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-focus);
 
-  /* Статусные токены (better-colors: статус несёт пару цвет + форма/иконка) */
-  --color-success: #047857;
-  --color-success-hover: #065f46;
-  --color-success-soft: #ecfdf5;
-  --color-success-border: #a7f3d0;
+  /* Статусные токены (приглушённые тёплые оттенки) */
+  --color-success: #4d6b2c;
+  --color-success-hover: #3d5622;
+  --color-success-soft: #f1f4e4;
+  --color-success-border: #cfdcaa;
 
-  --color-warning: #92400e;
-  --color-warning-hover: #78350f;
-  --color-warning-soft: #fffbeb;
-  --color-warning-border: #fde68a;
+  --color-warning: #94570f;
+  --color-warning-hover: #78460b;
+  --color-warning-soft: #fcf2df;
+  --color-warning-border: #efd29b;
 
-  --color-danger: #b91c1c;
-  --color-danger-hover: #991b1b;
-  --color-danger-soft: #fef2f2;
-  --color-danger-border: #fecaca;
+  --color-danger: #a33a2c;
+  --color-danger-hover: #852e23;
+  --color-danger-soft: #fbebe6;
+  --color-danger-border: #efc3b8;
 
-  --color-info: #1d4ed8;
-  --color-info-hover: #1e40af;
-  --color-info-soft: #eff6ff;
-  --color-info-border: #bfdbfe;
+  --color-info: #4f6577;
+  --color-info-hover: #3f5263;
+  --color-info-soft: #eef1f2;
+  --color-info-border: #c8d2d9;
 
-  --color-neutral: #334155;
-  --color-neutral-soft: #f1f5f9;
-  --color-neutral-border: #cbd5e1;
+  --color-neutral: #5a4739;
+  --color-neutral-soft: #f3ebdf;
+  --color-neutral-border: #d6c4aa;
 
   /* ------------------------------------------------------------
      Типографика (better-typography: иерархия, line-height, tnum)
@@ -98,12 +98,12 @@
   /* ------------------------------------------------------------
      Тени (better-ui: многослойные тени для естественной глубины)
      ------------------------------------------------------------ */
-  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.03);
-  --shadow-lg: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
-  --shadow-xl: 0 25px 50px -12px rgba(15, 23, 42, 0.2);
+  --shadow-xs: 0 1px 2px rgba(58, 42, 31, 0.04);
+  --shadow-sm: 0 1px 3px rgba(58, 42, 31, 0.06), 0 1px 2px rgba(58, 42, 31, 0.04);
+  --shadow: 0 4px 6px -1px rgba(58, 42, 31, 0.07), 0 2px 4px -2px rgba(58, 42, 31, 0.04);
+  --shadow-md: 0 10px 15px -3px rgba(58, 42, 31, 0.08), 0 4px 6px -4px rgba(58, 42, 31, 0.03);
+  --shadow-lg: 0 20px 25px -5px rgba(58, 42, 31, 0.1), 0 8px 10px -6px rgba(58, 42, 31, 0.04);
+  --shadow-xl: 0 25px 50px -12px rgba(58, 42, 31, 0.2);
 
   /* ------------------------------------------------------------
      Анимации и переходы (better-motion: 150–200ms cubic-bezier)
@@ -210,8 +210,8 @@ code {
   place-items: center;
   padding: 24px;
   background:
-    radial-gradient(circle at 10% 20%, rgba(30, 58, 95, 0.08) 0%, transparent 45%),
-    radial-gradient(circle at 90% 80%, rgba(30, 58, 95, 0.05) 0%, transparent 45%),
+    radial-gradient(circle at 10% 20%, rgba(111, 78, 55, 0.12) 0%, transparent 45%),
+    radial-gradient(circle at 90% 80%, rgba(168, 101, 47, 0.08) 0%, transparent 45%),
     var(--color-bg);
 }
 
@@ -345,7 +345,7 @@ code {
 }
 
 .nav-link:focus-visible {
-  outline: 2px solid #ffffff;
+  outline: 2px solid #fffaf3;
   outline-offset: 2px;
 }
 
@@ -902,7 +902,7 @@ table.data-table {
 
 @media (hover: hover) {
   .data-table tbody tr:hover {
-    background: #f8fafc;
+    background: var(--color-surface-hover);
   }
 }
 
@@ -1028,7 +1028,7 @@ table.data-table {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.52);
+  background: rgba(43, 30, 20, 0.5);
   backdrop-filter: blur(2px);
   display: grid;
   place-items: center;

@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.bcmanager.domain.LeaseContract;
 import ru.bcmanager.domain.Payment;
 import ru.bcmanager.domain.Tenant;
+import ru.bcmanager.domain.User;
 import ru.bcmanager.domain.enums.ContractStatus;
 import ru.bcmanager.domain.enums.PremisesStatus;
 import ru.bcmanager.domain.premises.Premises;
@@ -171,6 +172,37 @@ public class ContractService {
             LocalDate startDate,
             LocalDate endDate,
             boolean activate) {
+        return create(contractNumber, tenant, premisesId, startDate, endDate, activate, null);
+    }
+
+    /**
+     * Оформить договор с указанием сотрудника, который его оформил.
+     *
+     * @param contractNumber номер договора
+     * @param tenant         арендатор
+     * @param premisesId     помещение
+     * @param startDate      дата начала
+     * @param endDate        дата окончания
+     * @param activate       активировать ли договор сразу
+     * @param createdBy      пользователь-оформитель (может быть {@code null})
+     * @return сохранённый договор
+     */
+    @Transactional
+    public LeaseContract create(
+            String contractNumber,
+            Tenant tenant,
+            Long premisesId,
+            LocalDate startDate,
+            LocalDate endDate,
+            boolean activate,
+            User createdBy) {
+        if (startDate == null || endDate == null || !endDate.isAfter(startDate)) {
+            throw new IllegalArgumentException("Дата окончания должна быть позже даты начала");
+        }
+        if (tenant != null && !tenant.isActive()) {
+            throw new IllegalArgumentException(
+                    "Арендатор " + tenant.getCompanyName() + " неактивен");
+        }
         Premises premises = findPremises(premisesId);
         SpaceMatchingService.ConflictResult conflict = matchingService.checkLeaseConflict(
                 contractRepository.findAllWithDetails(),
@@ -199,6 +231,7 @@ public class ContractService {
                 activate ? ContractStatus.ACTIVE : ContractStatus.DRAFT);
         contract.setDiscountPercent(calculation.discountPercent());
         contract.setDepositAmount(calculation.totalMonthly());
+        contract.setCreatedBy(createdBy);
 
         LeaseContract saved = contractRepository.save(contract);
 

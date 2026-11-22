@@ -27,6 +27,9 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final org.slf4j.Logger LOG =
+            org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     /**
      * Пересечение дат аренды, дубль кода/ИНН и другие конфликты состояния.
      *
@@ -149,6 +152,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpected(Exception exception) {
+        LOG.error("Необработанная ошибка REST API", exception);
         return build(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Внутренняя ошибка сервера",

@@ -232,8 +232,8 @@ function initCharts(body, summary) {
     return;
   }
 
-  const accent = '#1e3a5f';
-  const accentSoft = 'rgba(30, 58, 95, 0.75)';
+  const accent = '#6f4e37';
+  const accentSoft = 'rgba(201, 162, 126, 0.75)';
 
   const typeCanvas = body.querySelector('#chart-by-type');
   if (typeCanvas) {
@@ -246,7 +246,7 @@ function initCharts(body, summary) {
           {
             label: 'Загруженность, %',
             data: rows.map((row) => Number(row.occupancyPercent) || 0),
-            backgroundColor: ['#1e3a5f', '#3d6d9e', '#7aa3cc', '#b9cfe4'],
+            backgroundColor: ['#6f4e37', '#a8652f', '#c9a27e', '#e6d2b8'],
             borderWidth: 0,
           },
         ],
