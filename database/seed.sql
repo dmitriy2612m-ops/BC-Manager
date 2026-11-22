@@ -1,7 +1,7 @@
 -- =============================================================================
 -- BC-Manager — демонстрационные данные (seed)
 -- Применять после database/schema.sql на чистой БД.
--- Пароли: admin123 / manager123 (BCrypt, cost 10).
+-- Пароли заданы в виде BCrypt-хэшей (cost 10).
 -- =============================================================================
 
 BEGIN;
@@ -13,8 +13,8 @@ TRUNCATE maintenance_requests, payments, lease_contracts, tenants, premises, use
 -- users: 2 (admin, manager)
 -- -----------------------------------------------------------------------------
 INSERT INTO users (username, password_hash, full_name, role) VALUES
-    ('admin',   '$2a$10$pSzudRcBYurpJiteU0YBCeoj6HkOKUeRAYbIy22mX5wIdYnPu7V.m', 'Муковников Дмитрий Андреевич', 'ADMIN'),
-    ('manager', '$2a$10$I0jDn6IXPcWdMO.3um6MfeDopjv.TQ/uVy64amuMdcb/pFfHAjbhe', 'Иванов Иван Иванович',        'MANAGER');
+    ('admin',   '$2a$10$Q7mw1bAKHmolTUvU5itPR.0y1PY9dugZ48K/3s5vPfpKskxyvHQs6', 'Муковников Дмитрий Андреевич', 'ADMIN'),
+    ('manager', '$2a$10$oju8QF4S9aCvFsuyJIny8ePlfCM/Ye9VtugycbWaWWnhSbgTqVfqS', 'Иванов Иван Иванович',        'MANAGER');
 
 -- -----------------------------------------------------------------------------
 -- premises: 15 помещений всех 4 типов, разные корпуса и этажи
