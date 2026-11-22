@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BC-Manager — Управление бизнес-центром</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+  <script type="module" src="/js/app.js"></script>
+</head>
+<body>
+  <!-- Экран входа -->
+  <section id="login-screen" class="login-screen" hidden>
+    <form id="login-form" class="login-card" novalidate>
+      <div class="login-logo">
+        <span class="login-logo-mark">BC</span>
+        <div>
+          <h1>BC-Manager</h1>
+          <p class="login-subtitle">Управление бизнес-центром</p>
+        </div>
+      </div>
+
+      <label class="field">
+        <span class="field-label">Логин</span>
+        <input type="text" name="username" autocomplete="username" placeholder="admin" required>
+      </label>
+
+      <label class="field">
+        <span class="field-label">Пароль</span>
+        <input type="password" name="password" autocomplete="current-password" placeholder="••••••" required>
+      </label>
+
+      <p id="login-error" class="form-error" role="alert" hidden></p>
+
+      <button type="submit" class="btn btn-primary btn-block">Войти</button>
+      <p class="login-hint">Демо-доступ: <code>admin / admin123</code> · <code>manager / manager123</code></p>
+    </form>
+  </section>
+
+  <!-- Приложение -->
+  <div id="app-shell" class="app-shell" hidden>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <span class="sidebar-logo-mark">BC</span>
+        <span class="sidebar-brand-name">BC-Manager</span>
+      </div>
+
+      <nav class="sidebar-nav" id="sidebar-nav" aria-label="Основная навигация">
+        <a class="nav-link" href="#/dashboard" data-route="dashboard">
+          <span class="nav-icon" aria-hidden="true">▤</span><span>Дашборд</span>
+        </a>
+        <a class="nav-link" href="#/premises" data-route="premises">
+          <span class="nav-icon" aria-hidden="true">▦</span><span>Помещения</span>
+        </a>
+        <a class="nav-link" href="#/tenants" data-route="tenants">
+          <span class="nav-icon" aria-hidden="true">☰</span><span>Арендаторы</span>
+        </a>
+        <a class="nav-link" href="#/contracts" data-route="contracts">
+          <span class="nav-icon" aria-hidden="true">✎</span><span>Договоры</span>
+        </a>
+        <a class="nav-link" href="#/payments" data-route="payments">
+          <span class="nav-icon" aria-hidden="true">₽</span><span>Платежи</span>
+        </a>
+        <a class="nav-link" href="#/maintenance" data-route="maintenance">
+          <span class="nav-icon" aria-hidden="true">⚙</span><span>Заявки на ТО</span>
+        </a>
+      </nav>
+    </aside>
+
+    <div class="main-column">
+      <header class="topbar">
+        <button class="icon-btn sidebar-toggle" id="sidebar-toggle" type="button"
+                aria-label="Показать/скрыть меню">☰</button>
+        <h2 class="topbar-title" id="page-title">Дашборд</h2>
+        <div class="topbar-user">
+          <div class="topbar-user-info">
+            <span class="topbar-user-name" id="user-name">—</span>
+            <span class="role-badge" id="user-role">—</span>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="logout-btn" type="button">Выйти</button>
+        </div>
+      </header>
+
+      <main class="content" id="view-root" tabindex="-1"></main>
+    </div>
+  </div>
+
+  <!-- Контейнер модальных окон -->
+  <div class="modal-backdrop" id="modal-root" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <header class="modal-header">
+        <h3 id="modal-title">Заголовок</h3>
+        <button class="icon-btn" id="modal-close" type="button" aria-label="Закрыть">×</button>
+      </header>
+      <div class="modal-body" id="modal-body"></div>
+      <footer class="modal-footer" id="modal-footer"></footer>
+    </div>
+  </div>
+
+  <!-- Контейнер toast-уведомлений -->
+  <div class="toast-root" id="toast-root" role="status" aria-live="polite"></div>
+</body>
+</html>

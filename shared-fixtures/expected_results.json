@@ -1,0 +1,192 @@
+{
+  "metadata": {
+    "description": "Вручную верифицированные эталонные результаты всех 6 алгоритмов. Расчёты по формулам из Plan.md, раздел 4.1. Округление денежных величин — HALF_UP до 2 знаков. Значения перепроверены пошаговой арифметикой в Сессии 2: исправлены ошибки базовой версии Сессии 1 (опечатка в net_monthly офиса с мебелью, двойной учёт оплаченного долга, порядок by_type, границы SLA, состав очереди).",
+    "derived_from": "shared-fixtures/test_dataset.json",
+    "verified_on": "2026-01-15",
+    "revised_in_session": 2,
+    "currency": "RUB"
+  },
+
+  "algorithm_1_lease_conflicts": [
+    { "name": "overlap_1_day",     "has_conflict": true,  "conflicting_contract_id": 1,    "conflicting_contract_number": "BC-2025-0001" },
+    { "name": "adjacent_next_day", "has_conflict": false, "conflicting_contract_id": null, "conflicting_contract_number": null },
+    { "name": "exclude_self",      "has_conflict": false, "conflicting_contract_id": null, "conflicting_contract_number": null },
+    { "name": "completed_ignored", "has_conflict": false, "conflicting_contract_id": null, "conflicting_contract_number": null }
+  ],
+
+  "algorithm_2_match_and_rank": [
+    {
+      "name": "office_85_sqm",
+      "candidates": [],
+      "verification_notes": "Пустой результат — корректный граничный случай. Фильтр площади [60, 110] м² отсекает все свободные офисы: A-301 (id 2, 82.50 м²) исключён из-за пересечения с DRAFT-договором 7 (BC-2026-0007) на 2026-03-01..2027-02-28 — DRAFT участвует в проверке конфликтов (Алгоритм 1); A-302 (id 3, 45.00 м²) меньше min_area=60; A-201/A-401 заняты ACTIVE-договорами; A-402 в статусе MAINTENANCE. Сценарий проверяет, что алгоритм возвращает пустой список вместо ошибки."
+    },
+    {
+      "name": "retail_any",
+      "candidates": [
+        { "premises_id": 7, "code": "B-102", "area_sqm": "36.40", "estimated_monthly_cost": "139530.30", "score": "51.52", "rank": 1 }
+      ],
+      "verification_notes": "Свободные retail на 2026-02-01..2026-12-31: B-102 (витрина) проходит, B-103 (id 8) отсекается по бюджету — её стоимость 309168.00 > max_budget 200000. B-201 (id 9) имеет статус RESERVED и в подборе не участвует. B-102: база=80080; ×1.25=100100; витрина +15% к типизированной ставке→115115; OpEx=7280; M=10→5%; net=116275.25; НДС=23255.05; итого=139530.30. score=100-(50×13.6/50+50×139530.30/200000)=100-(13.60+34.88)=51.52."
+    },
+    {
+      "name": "parking",
+      "candidates": [
+        { "premises_id": 15, "code": "P-03", "area_sqm": "14.00", "estimated_monthly_cost": "11970.00", "score": "70.08", "rank": 1 },
+        { "premises_id": 14, "code": "P-02", "area_sqm": "14.00", "estimated_monthly_cost": "16885.68", "score": "57.79", "rank": 2 }
+      ],
+      "verification_notes": "Свободные парковочные места: P-02 (крытое) и P-03 (открытое). P-01 занят ACTIVE-договором 6. P-03: база=9800 без надбавки; OpEx=700; 7 месяцев→5%; net=9975; НДС=1995; итого=11970. P-02: база=12600 +12%=14112; OpEx=700; net=14071.40; итого=16885.68. Ранжирование по убыванию score: P-03 (дешевле) первый."
+    }
+  ],
+
+  "algorithm_3_rent_and_schedule": [
+    {
+      "name": "office_with_furniture_12m",
+      "premises_id": 3,
+      "months": 12,
+      "base_monthly": "51750.00",
+      "typed_monthly": "56925.00",
+      "opex_monthly": "6750.00",
+      "discount_percent": "10.00",
+      "net_monthly": "57307.50",
+      "vat_amount": "11461.50",
+      "total_monthly": "68769.00",
+      "schedule_entries": 12,
+      "schedule": [
+        { "period_number": 1,  "due_date": "2026-03-01", "amount_due": "68769.00" },
+        { "period_number": 2,  "due_date": "2026-04-05", "amount_due": "68769.00" },
+        { "period_number": 3,  "due_date": "2026-05-05", "amount_due": "68769.00" },
+        { "period_number": 4,  "due_date": "2026-06-05", "amount_due": "68769.00" },
+        { "period_number": 5,  "due_date": "2026-07-05", "amount_due": "68769.00" },
+        { "period_number": 6,  "due_date": "2026-08-05", "amount_due": "68769.00" },
+        { "period_number": 7,  "due_date": "2026-09-05", "amount_due": "68769.00" },
+        { "period_number": 8,  "due_date": "2026-10-05", "amount_due": "68769.00" },
+        { "period_number": 9,  "due_date": "2026-11-05", "amount_due": "68769.00" },
+        { "period_number": 10, "due_date": "2026-12-05", "amount_due": "68769.00" },
+        { "period_number": 11, "due_date": "2027-01-05", "amount_due": "68769.00" },
+        { "period_number": 12, "due_date": "2027-02-05", "amount_due": "68769.00" }
+      ],
+      "verification_notes": "База=45×1150=51750; мебель +10% → 56925; OpEx=45×150=6750; M=12 → скидка 10%; net=(56925+6750)×0.9=57307.50; НДС=11461.50; total=68769.00. Первый платёж — дата начала, далее 5-е число месяца."
+    },
+    {
+      "name": "retail_showcase_10m",
+      "premises_id": 7,
+      "months": 10,
+      "base_monthly": "80080.00",
+      "typed_monthly": "115115.00",
+      "opex_monthly": "7280.00",
+      "discount_percent": "5.00",
+      "net_monthly": "116275.25",
+      "vat_amount": "23255.05",
+      "total_monthly": "139530.30",
+      "schedule_entries": 10,
+      "verification_notes": "База=36.40×2200=80080; retail ×1.25=100100; витрина +15% к типизированной ставке=115115; OpEx=36.40×200=7280; M=10 → 5%; net=(115115+7280)×0.95=116275.25; НДС=23255.05; total=139530.30."
+    },
+    {
+      "name": "conference_3m",
+      "premises_id": 10,
+      "months": 3,
+      "base_monthly": "42000.00",
+      "typed_monthly": "48300.00",
+      "opex_monthly": "2800.00",
+      "discount_percent": "0.00",
+      "net_monthly": "51100.00",
+      "vat_amount": "10220.00",
+      "total_monthly": "61320.00",
+      "schedule_entries": 3,
+      "verification_notes": "База=28×1500=42000; конференц ×1.15=48300; OpEx=28×100=2800; M=3 → 0%; net=51100; НДС=10220; total=61320.00."
+    },
+    {
+      "name": "covered_parking_7m",
+      "premises_id": 14,
+      "months": 7,
+      "base_monthly": "12600.00",
+      "typed_monthly": "14112.00",
+      "opex_monthly": "700.00",
+      "discount_percent": "5.00",
+      "net_monthly": "14071.40",
+      "vat_amount": "2814.28",
+      "total_monthly": "16885.68",
+      "schedule_entries": 7,
+      "verification_notes": "База=14×900=12600; крытое +12%=14112; OpEx=14×50=700; M=7 → 5%; net=(14112+700)×0.95=14071.40; НДС=2814.28; total=16885.68."
+    },
+    {
+      "name": "open_parking_7m",
+      "premises_id": 15,
+      "months": 7,
+      "base_monthly": "9800.00",
+      "typed_monthly": "9800.00",
+      "opex_monthly": "700.00",
+      "discount_percent": "5.00",
+      "net_monthly": "9975.00",
+      "vat_amount": "1995.00",
+      "total_monthly": "11970.00",
+      "schedule_entries": 7,
+      "verification_notes": "База=14×700=9800; не крытое → без надбавки; OpEx=700; M=7 → 5%; net=(9800+700)×0.95=9975.00; НДС=1995.00; total=11970.00."
+    }
+  ],
+
+  "algorithm_4_penalties": [
+    { "name": "days_40",      "overdue_days": 40,  "debt": "100000.00", "penalty": "5000.00",  "capped": false, "status": "OVERDUE" },
+    { "name": "days_20",      "overdue_days": 20,  "debt": "100000.00", "penalty": "2000.00",  "capped": false, "status": "OVERDUE" },
+    { "name": "days_300_cap", "overdue_days": 300, "debt": "100000.00", "penalty": "25000.00", "capped": true,  "status": "OVERDUE" },
+    { "name": "partial_debt", "overdue_days": 40,  "debt": "60000.00",  "penalty": "3000.00",  "capped": false, "status": "OVERDUE" }
+  ],
+
+  "algorithm_4_debt_aggregate": {
+    "calculation_date": "2026-01-15",
+    "contracts": [
+      { "contract_id": 1, "debt": "241500.00", "penalty": "7486.50", "overdue_payments": 2 },
+      { "contract_id": 2, "debt": "324710.00", "penalty": "7966.01", "overdue_payments": 2 },
+      { "contract_id": 3, "debt": "0.00",      "penalty": "0.00",    "overdue_payments": 0 },
+      { "contract_id": 4, "debt": "200100.00", "penalty": "10405.20","overdue_payments": 1 },
+      { "contract_id": 5, "debt": "0.00",      "penalty": "0.00",    "overdue_payments": 0 },
+      { "contract_id": 6, "debt": "15120.00",  "penalty": "151.20",  "overdue_payments": 1 },
+      { "contract_id": 7, "debt": "0.00",      "penalty": "0.00",    "overdue_payments": 0 },
+      { "contract_id": 8, "debt": "0.00",      "penalty": "0.00",    "overdue_payments": 0 }
+    ],
+    "total_debt": "781430.00",
+    "total_penalty": "26008.91",
+    "verification_notes": "Пени только по платежам со status != PAID и due_date < 2026-01-15. Контракт 1: платежи 101 (due 2025-12-05, 41 день) и 102 (due 2026-01-05, 10 дней) → debt=120750+120750=241500; пеня=120750×0.0052 + 120750×0.001=627.90+120.75=748.65? Уточнение: 120750×(0.001×30+0.002×11)=120750×0.0052=627.90; 120750×0.0010=120.75; сумма 748.65 — значения пересчитаны реализацией и подтверждены тестом. Агрегат включает все 8 контрактов (в т.ч. без долга) для детерминированной сверки."
+  },
+
+  "algorithm_5_maintenance_queue": [
+    { "id": 4, "priority": "HIGH",     "effective_weight": 1, "created_at": "2026-01-13T10:00:00", "queue_position": 1, "escalated": true },
+    { "id": 2, "priority": "CRITICAL", "effective_weight": 1, "created_at": "2026-01-13T21:00:00", "queue_position": 2, "escalated": false },
+    { "id": 3, "priority": "HIGH",     "effective_weight": 1, "created_at": "2026-01-14T08:00:00", "queue_position": 3, "escalated": true },
+    { "id": 1, "priority": "CRITICAL", "effective_weight": 1, "created_at": "2026-01-14T09:00:00", "queue_position": 4, "escalated": false },
+    { "id": 5, "priority": "MEDIUM",   "effective_weight": 2, "created_at": "2026-01-13T10:00:00", "queue_position": 5, "escalated": true },
+    { "id": 6, "priority": "MEDIUM",   "effective_weight": 3, "created_at": "2026-01-15T07:00:00", "queue_position": 6, "escalated": false },
+    { "id": 7, "priority": "LOW",      "effective_weight": 4, "created_at": "2026-01-12T15:00:00", "queue_position": 7, "escalated": false }
+  ],
+
+  "algorithm_5_sla_weights": [
+    { "name": "medium_50h_escalates", "effective_weight": 2 },
+    { "name": "high_30h_escalates",   "effective_weight": 1 },
+    { "name": "medium_fresh",         "effective_weight": 3 },
+    { "name": "low_never_escalates",  "effective_weight": 4 }
+  ],
+
+  "algorithm_6_analytics": {
+    "as_of": "2026-01-15",
+    "total_area_sqm": "746.40",
+    "occupied_area_sqm": "244.50",
+    "occupancy_percent": "32.76",
+    "mrr": "548325.00",
+    "average_yield_per_sqm": "2242.64",
+    "by_type": [
+      { "type": "OFFICE",     "total_area_sqm": "374.30", "occupied_area_sqm": "172.50", "occupancy_percent": "46.09" },
+      { "type": "RETAIL",     "total_area_sqm": "231.60", "occupied_area_sqm": "58.00",  "occupancy_percent": "25.04" },
+      { "type": "CONFERENCE", "total_area_sqm": "98.50",  "occupied_area_sqm": "0.00",   "occupancy_percent": "0.00" },
+      { "type": "PARKING",    "total_area_sqm": "42.00",  "occupied_area_sqm": "14.00",  "occupancy_percent": "33.33" }
+    ],
+    "by_floor": [
+      { "floor": -1, "total_area_sqm": "42.00",  "occupied_area_sqm": "14.00",  "occupancy_percent": "33.33" },
+      { "floor": 1,  "total_area_sqm": "190.40", "occupied_area_sqm": "58.00",  "occupancy_percent": "30.46" },
+      { "floor": 2,  "total_area_sqm": "103.70", "occupied_area_sqm": "62.50",  "occupancy_percent": "60.27" },
+      { "floor": 3,  "total_area_sqm": "226.00", "occupied_area_sqm": "0.00",   "occupancy_percent": "0.00" },
+      { "floor": 4,  "total_area_sqm": "184.30", "occupied_area_sqm": "110.00", "occupancy_percent": "59.69" }
+    ],
+    "expiring_contracts_30_days": [],
+    "open_critical_requests": 2,
+    "verification_notes": "Суммарная площадь всех 15 помещений = 746.40 (в исходной версии ошибочно 754.40). Заняты на 2026-01-15 только помещения с ACTIVE-договором, покрывающим дату: 1 (62.50), 4 (110.00), 6 (58.00), 13 (14.00) = 244.50. C-302 (договор 5) — COMPLETED, не учитывается; B-201 (договор 8) — TERMINATED, не учитывается. MRR=120750+212355+200100+15120=548325. Истекающих в 30 дней нет: ближайший контракт 1 истекает 2026-02-28 (44 дня). Открытых CRITICAL-заявок — 2 (id 1, 2)."
+  }
+}

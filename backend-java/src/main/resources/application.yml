@@ -1,0 +1,55 @@
+spring:
+  application:
+    name: bc-manager
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/bc_manager}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      # Схема управляется Flyway-миграциями, Hibernate её только валидирует.
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+          batch_size: 30
+        format_sql: false
+    show-sql: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: always
+
+bcmanager:
+  jwt:
+    # Секрет подписи JWT (мин. 32 байта). Переопределяется переменной окружения JWT_SECRET.
+    secret: ${JWT_SECRET:bc-manager-default-development-secret-key-please-override-1234567890}
+    expiration-minutes: ${JWT_EXPIRATION_MINUTES:480}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    root: INFO
+    ru.bcmanager: DEBUG
+    org.hibernate.SQL: WARN
