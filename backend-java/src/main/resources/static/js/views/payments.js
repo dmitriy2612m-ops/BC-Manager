@@ -40,7 +40,7 @@ const state = {
  */
 export async function renderPayments(root, { context } = {}) {
   if (context?.contractId) {
-    state.filters = { status: '', overdueOnly: false };
+    state.filters = { status: '', overdueOnly: false, contractId: Number(context.contractId) };
   }
 
   root.innerHTML = `
@@ -86,7 +86,7 @@ export async function renderPayments(root, { context } = {}) {
   });
 
   root.querySelector('#reset-payment-filters')?.addEventListener('click', () => {
-    state.filters = { status: '', overdueOnly: false };
+    state.filters = { status: '', overdueOnly: false, contractId: null };
     root.querySelector('#payment-filters').reset();
     loadTable(root);
   });
@@ -124,6 +124,9 @@ async function loadTable(root) {
   container.innerHTML = loadingHtml();
 
   const query = {};
+  if (state.filters.contractId) {
+    query.contractId = state.filters.contractId;
+  }
   if (state.filters.status) {
     query.status = state.filters.status;
   }

@@ -16,12 +16,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import ru.bcmanager.domain.LeaseContract;
 import ru.bcmanager.domain.Tenant;
-import ru.bcmanager.dto.ContractDtos;
 import ru.bcmanager.dto.DtoMapper;
 import ru.bcmanager.dto.TenantDtos;
-import ru.bcmanager.repository.LeaseContractRepository;
+import ru.bcmanager.service.RegistryReadService;
 import ru.bcmanager.service.TenantService;
 
 /**
@@ -37,23 +35,23 @@ public class TenantController {
 
     private final TenantService tenantService;
 
-    private final LeaseContractRepository contractRepository;
+    private final RegistryReadService registryReadService;
 
     private final DtoMapper mapper;
 
     /**
      * Создать контроллер арендаторов.
      *
-     * @param tenantService      сервис арендаторов
-     * @param contractRepository репозиторий договоров
-     * @param mapper             преобразователь в DTO
+     * @param tenantService       сервис арендаторов
+     * @param registryReadService сервис транзакционного чтения карточек
+     * @param mapper              преобразователь в DTO
      */
     public TenantController(
             TenantService tenantService,
-            LeaseContractRepository contractRepository,
+            RegistryReadService registryReadService,
             DtoMapper mapper) {
         this.tenantService = tenantService;
-        this.contractRepository = contractRepository;
+        this.registryReadService = registryReadService;
         this.mapper = mapper;
     }
 
@@ -83,17 +81,7 @@ public class TenantController {
     @GetMapping("/{id}")
     @Operation(summary = "Карточка арендатора и его договоры")
     public TenantDtos.TenantDetailsResponse findById(@PathVariable Long id) {
-        Tenant tenant = tenantService.findById(id);
-        List<LeaseContract> contracts =
-                contractRepository.findByTenantId(tenant.getId());
-        contracts.sort((left, right) ->
-                right.getStartDate().compareTo(left.getStartDate()));
-
-        List<ContractDtos.ContractSummary> summaries = new ArrayList<>(contracts.size());
-        for (LeaseContract contract : contracts) {
-            summaries.add(mapper.toContractSummary(contract));
-        }
-        return new TenantDtos.TenantDetailsResponse(mapper.toTenant(tenant), summaries);
+        return registryReadService.findTenantDetails(id);
     }
 
     /**

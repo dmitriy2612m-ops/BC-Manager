@@ -95,13 +95,15 @@ export async function renderContracts(root, { context } = {}) {
     loadTable(root);
   });
 
-  // Переход из «Умного подбора»: сразу открываем мастер с черновиком.
+  // Переход из других экранов: мастер с черновиком, выбор арендатора или карточка договора.
   if (context?.draft) {
     await loadDictionaries();
     openContractWizard(root, { draft: context.draft });
   } else if (context?.tenantId) {
     await loadDictionaries();
     openContractWizard(root, { tenantId: context.tenantId });
+  } else if (context?.contractId) {
+    await openContractCard(Number(context.contractId));
   }
 
   await loadTable(root);
@@ -265,6 +267,7 @@ async function loadDictionaries() {
  */
 async function openContractCard(contractId) {
   openModal({
+    size: 'lg',
     title: 'Договор аренды',
     bodyHtml: loadingHtml(),
     onMount(body) {
@@ -366,6 +369,7 @@ async function openContractWizard(root, { draft, tenantId } = {}) {
   )}`;
 
   openModal({
+    size: 'lg',
     title: 'Оформление договора аренды',
     bodyHtml: `
       <form id="contract-wizard" class="stack" novalidate>

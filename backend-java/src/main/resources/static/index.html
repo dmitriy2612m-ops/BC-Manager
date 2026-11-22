@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="BC-Manager — веб-приложение для комплексного управления коммерческой недвижимостью бизнес-центра">
   <title>BC-Manager — Управление бизнес-центром</title>
   <link rel="stylesheet" href="/css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
@@ -13,26 +14,36 @@
   <section id="login-screen" class="login-screen" hidden>
     <form id="login-form" class="login-card" novalidate>
       <div class="login-logo">
-        <span class="login-logo-mark">BC</span>
+        <span class="login-logo-mark" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 21h18"/>
+            <path d="M6 21V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v14"/>
+            <path d="M9 10h1"/>
+            <path d="M9 14h1"/>
+            <path d="M14 10h1"/>
+            <path d="M14 14h1"/>
+            <path d="M11 21v-3a1 1 0 0 1 1-1h0a1 1 0 0 1 1 1v3"/>
+          </svg>
+        </span>
         <div>
           <h1>BC-Manager</h1>
           <p class="login-subtitle">Управление бизнес-центром</p>
         </div>
       </div>
 
-      <label class="field">
+      <label class="field" for="login-username">
         <span class="field-label">Логин</span>
-        <input type="text" name="username" autocomplete="username" placeholder="admin" required>
+        <input type="text" id="login-username" name="username" autocomplete="username" placeholder="admin" required>
       </label>
 
-      <label class="field">
+      <label class="field" for="login-password">
         <span class="field-label">Пароль</span>
-        <input type="password" name="password" autocomplete="current-password" placeholder="••••••" required>
+        <input type="password" id="login-password" name="password" autocomplete="current-password" placeholder="••••••••" required>
       </label>
 
       <p id="login-error" class="form-error" role="alert" hidden></p>
 
-      <button type="submit" class="btn btn-primary btn-block">Войти</button>
+      <button type="submit" class="btn btn-primary btn-block">Войти в систему</button>
       <p class="login-hint">Демо-доступ: <code>admin / admin123</code> · <code>manager / manager123</code></p>
     </form>
   </section>
@@ -41,43 +52,115 @@
   <div id="app-shell" class="app-shell" hidden>
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-brand">
-        <span class="sidebar-logo-mark">BC</span>
+        <span class="sidebar-logo-mark" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 21h18"/>
+            <path d="M6 21V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v14"/>
+            <path d="M9 10h1"/>
+            <path d="M9 14h1"/>
+            <path d="M14 10h1"/>
+            <path d="M14 14h1"/>
+          </svg>
+        </span>
         <span class="sidebar-brand-name">BC-Manager</span>
       </div>
 
       <nav class="sidebar-nav" id="sidebar-nav" aria-label="Основная навигация">
         <a class="nav-link" href="#/dashboard" data-route="dashboard">
-          <span class="nav-icon" aria-hidden="true">▤</span><span>Дашборд</span>
+          <span class="nav-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="7" height="9" x="3" y="3" rx="1"/>
+              <rect width="7" height="5" x="14" y="3" rx="1"/>
+              <rect width="7" height="9" x="14" y="12" rx="1"/>
+              <rect width="7" height="5" x="3" y="16" rx="1"/>
+            </svg>
+          </span>
+          <span>Дашборд</span>
         </a>
         <a class="nav-link" href="#/premises" data-route="premises">
-          <span class="nav-icon" aria-hidden="true">▦</span><span>Помещения</span>
+          <span class="nav-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="18" height="18" x="3" y="3" rx="2"/>
+              <path d="M3 9h18"/>
+              <path d="M3 15h18"/>
+              <path d="M9 3v18"/>
+              <path d="M15 3v18"/>
+            </svg>
+          </span>
+          <span>Помещения</span>
         </a>
         <a class="nav-link" href="#/tenants" data-route="tenants">
-          <span class="nav-icon" aria-hidden="true">☰</span><span>Арендаторы</span>
+          <span class="nav-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </span>
+          <span>Арендаторы</span>
         </a>
         <a class="nav-link" href="#/contracts" data-route="contracts">
-          <span class="nav-icon" aria-hidden="true">✎</span><span>Договоры</span>
+          <span class="nav-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+          </span>
+          <span>Договоры</span>
         </a>
         <a class="nav-link" href="#/payments" data-route="payments">
-          <span class="nav-icon" aria-hidden="true">₽</span><span>Платежи</span>
+          <span class="nav-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="20" height="14" x="2" y="5" rx="2"/>
+              <line x1="2" y1="10" x2="22" y2="10"/>
+            </svg>
+          </span>
+          <span>Платежи</span>
         </a>
         <a class="nav-link" href="#/maintenance" data-route="maintenance">
-          <span class="nav-icon" aria-hidden="true">⚙</span><span>Заявки на ТО</span>
+          <span class="nav-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+            </svg>
+          </span>
+          <span>Заявки на ТО</span>
         </a>
       </nav>
     </aside>
 
     <div class="main-column">
       <header class="topbar">
-        <button class="icon-btn sidebar-toggle" id="sidebar-toggle" type="button"
-                aria-label="Показать/скрыть меню">☰</button>
+        <button class="icon-btn sidebar-toggle" id="sidebar-toggle" type="button" aria-label="Показать или скрыть боковое меню">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
         <h2 class="topbar-title" id="page-title">Дашборд</h2>
         <div class="topbar-user">
+          <div class="topbar-user-avatar" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
           <div class="topbar-user-info">
             <span class="topbar-user-name" id="user-name">—</span>
             <span class="role-badge" id="user-role">—</span>
           </div>
-          <button class="btn btn-ghost btn-sm" id="logout-btn" type="button">Выйти</button>
+          <button class="btn btn-ghost btn-sm" id="logout-btn" type="button" aria-label="Выйти из учетной записи">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            <span>Выйти</span>
+          </button>
         </div>
       </header>
 
@@ -87,10 +170,15 @@
 
   <!-- Контейнер модальных окон -->
   <div class="modal-backdrop" id="modal-root" hidden>
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal modal-md" id="modal-container" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <header class="modal-header">
         <h3 id="modal-title">Заголовок</h3>
-        <button class="icon-btn" id="modal-close" type="button" aria-label="Закрыть">×</button>
+        <button class="icon-btn" id="modal-close" type="button" aria-label="Закрыть окно">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </header>
       <div class="modal-body" id="modal-body"></div>
       <footer class="modal-footer" id="modal-footer"></footer>

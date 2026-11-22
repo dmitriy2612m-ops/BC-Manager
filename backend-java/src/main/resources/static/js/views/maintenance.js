@@ -292,6 +292,7 @@ async function openCreateModal(root) {
   }
 
   openModal({
+    size: 'md',
     title: 'Новая заявка на ТО',
     bodyHtml: `
       <form id="request-form" class="form-grid" novalidate>

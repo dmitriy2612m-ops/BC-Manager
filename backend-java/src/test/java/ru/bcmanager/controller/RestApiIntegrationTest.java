@@ -446,6 +446,22 @@ class RestApiIntegrationTest {
                 .andExpect(jsonPath("$[0].inn").value("7701234567"));
     }
 
+    @Test
+    @DisplayName("GET /tenants/{id}: карточка арендатора возвращает данные и список договоров")
+    void tenantCardReturnsTenantWithContracts() throws Exception {
+        String token = loginAs("admin");
+        createContract(token, "DOG-CARD-1", "2026-01-01", "2026-06-30")
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/v1/tenants/" + tenant.getId())
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tenant.companyName").value("ООО Тест"))
+                .andExpect(jsonPath("$.tenant.inn").value("7701234567"))
+                .andExpect(jsonPath("$.contracts[0].contractNumber").value("DOG-CARD-1"))
+                .andExpect(jsonPath("$.contracts[0].premisesCode").value(premises.getCode()));
+    }
+
     // --------------------------------------------------------------------- //
     // Вспомогательные методы
     // --------------------------------------------------------------------- //

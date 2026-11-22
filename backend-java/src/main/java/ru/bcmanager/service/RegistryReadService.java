@@ -8,20 +8,25 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.bcmanager.domain.LeaseContract;
+import ru.bcmanager.domain.MaintenanceRequest;
+import ru.bcmanager.domain.Payment;
+import ru.bcmanager.domain.Tenant;
+import ru.bcmanager.domain.enums.PaymentStatus;
+import ru.bcmanager.dto.ContractDtos;
 import ru.bcmanager.dto.DtoMapper;
 import ru.bcmanager.dto.MaintenanceDtos;
 import ru.bcmanager.dto.PaymentDtos;
-import ru.bcmanager.domain.MaintenanceRequest;
-import ru.bcmanager.domain.Payment;
-import ru.bcmanager.domain.enums.PaymentStatus;
+import ru.bcmanager.dto.TenantDtos;
+import ru.bcmanager.repository.LeaseContractRepository;
 
 /**
  * Чтение реестров с отображением в DTO внутри транзакции.
  *
  * <p>{@code open-in-view} выключен, поэтому ленивые связи ({@code Payment.contract},
- * {@code MaintenanceRequest.premises}) нельзя инициализировать в контроллере после
- * завершения транзакции сервиса. Этот фасад собирает DTO там, где сессия Hibernate
- * ещё открыта, и отдаёт контроллерам готовые объекты.
+ * {@code MaintenanceRequest.premises}, {@code LeaseContract.premises}) нельзя
+ * инициализировать в контроллере после завершения транзакции сервиса. Этот фасад
+ * собирает DTO там, где сессия Hibernate ещё открыта, и отдаёт контроллерам готовые объекты.
  */
 @Service
 public class RegistryReadService {
@@ -30,6 +35,10 @@ public class RegistryReadService {
 
     private final MaintenanceService maintenanceService;
 
+    private final TenantService tenantService;
+
+    private final LeaseContractRepository contractRepository;
+
     private final DtoMapper mapper;
 
     /**
@@ -37,14 +46,20 @@ public class RegistryReadService {
      *
      * @param paymentService     сервис платежей
      * @param maintenanceService сервис заявок
+     * @param tenantService      сервис арендаторов
+     * @param contractRepository репозиторий договоров
      * @param mapper             преобразователь в DTO
      */
     public RegistryReadService(
             PaymentService paymentService,
             MaintenanceService maintenanceService,
+            TenantService tenantService,
+            LeaseContractRepository contractRepository,
             DtoMapper mapper) {
         this.paymentService = paymentService;
         this.maintenanceService = maintenanceService;
+        this.tenantService = tenantService;
+        this.contractRepository = contractRepository;
         this.mapper = mapper;
     }
 
@@ -98,5 +113,26 @@ public class RegistryReadService {
             rows.add(mapper.toMaintenance(request, queueById.get(request.getId())));
         }
         return rows;
+    }
+
+    /**
+     * Карточка арендатора с договорами в виде DTO внутри транзакции.
+     *
+     * @param id идентификатор арендатора
+     * @return карточка с договорами
+     */
+    @Transactional(readOnly = true)
+    public TenantDtos.TenantDetailsResponse findTenantDetails(Long id) {
+        Tenant tenant = tenantService.findById(id);
+        List<LeaseContract> contracts =
+                contractRepository.findByTenantIdWithDetails(tenant.getId());
+        contracts.sort((left, right) ->
+                right.getStartDate().compareTo(left.getStartDate()));
+
+        List<ContractDtos.ContractSummary> summaries = new ArrayList<>(contracts.size());
+        for (LeaseContract contract : contracts) {
+            summaries.add(mapper.toContractSummary(contract));
+        }
+        return new TenantDtos.TenantDetailsResponse(mapper.toTenant(tenant), summaries);
     }
 }

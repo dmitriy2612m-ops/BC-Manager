@@ -57,6 +57,15 @@ public interface LeaseContractRepository extends JpaRepository<LeaseContract, Lo
     List<LeaseContract> findByTenantId(Long tenantId);
 
     /**
+     * Найти договоры арендатора с подгруженными помещением и арендатором.
+     *
+     * @param tenantId идентификатор арендатора
+     * @return список договоров с деталями
+     */
+    @Query("SELECT c FROM LeaseContract c JOIN FETCH c.premises JOIN FETCH c.tenant WHERE c.tenant.id = :tenantId")
+    List<LeaseContract> findByTenantIdWithDetails(@Param("tenantId") Long tenantId);
+
+    /**
      * Найти договоры помещения в заданных статусах (для проверки конфликтов
      * дат по индексу {@code idx_contracts_premises_dates}).
      *

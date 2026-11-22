@@ -16,6 +16,7 @@ import {
   formatMoney,
   formatPercent,
   loadingHtml,
+  renderIcon,
   toast,
 } from '../ui.js';
 
@@ -43,11 +44,18 @@ export async function renderDashboard(root) {
   root.innerHTML = `
     <div class="stack">
       <header class="page-header">
-        <h1>Дашборд</h1>
-        <p class="page-subtitle">Сводные показатели бизнес-центра на текущую дату</p>
+        <div>
+          <h1>Дашборд</h1>
+          <p class="page-subtitle">Сводные показатели бизнес-центра на текущую дату</p>
+        </div>
         <div class="page-header-actions">
-          <button class="btn btn-secondary" type="button" id="reload-dashboard">Обновить</button>
-          <button class="btn btn-primary" type="button" id="export-csv">Экспорт в CSV</button>
+          <button class="btn btn-secondary" type="button" id="reload-dashboard">
+            <span>Обновить</span>
+          </button>
+          <button class="btn btn-primary" type="button" id="export-csv">
+            ${renderIcon('external')}
+            <span>Экспорт в CSV</span>
+          </button>
         </div>
       </header>
       <section id="dashboard-body">${loadingHtml()}</section>
@@ -100,6 +108,18 @@ async function loadDashboard(root) {
 
   body.innerHTML = dashboardMarkup(summary);
   initCharts(body, summary);
+
+  body.querySelectorAll('[data-contract-id]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const contractId = btn.dataset.contractId;
+      window.location.hash = '#/contracts';
+      window.dispatchEvent(
+        new CustomEvent('bc:route-context', {
+          detail: { route: 'contracts', context: { contractId } },
+        }),
+      );
+    });
+  });
 }
 
 /**
@@ -123,10 +143,15 @@ function dashboardMarkup(s) {
             (row) => `
           <li>
             <span>
-              <strong>${escapeHtml(row.contractNumber)}</strong>
+              <strong class="tabular-nums">${escapeHtml(row.contractNumber)}</strong>
               <span class="field-hint"> · до ${formatDate(row.endDate)}</span>
             </span>
-            <span class="days-left">${row.daysLeft} дн.</span>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="days-left tabular-nums">${row.daysLeft} дн.</span>
+              <button class="btn btn-ghost btn-sm" type="button" data-contract-id="${row.contractId}">
+                <span>Открыть</span>
+              </button>
+            </div>
           </li>`,
           )
           .join('')}

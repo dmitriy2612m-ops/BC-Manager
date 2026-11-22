@@ -398,6 +398,7 @@ function openPremisesForm({ premises, onSaved }) {
   const value = premises || {};
 
   openModal({
+    size: 'md',
     title: isEdit ? `Помещение ${value.code}` : 'Новое помещение',
     bodyHtml: `
       <form id="premises-form" class="form-grid" novalidate>
