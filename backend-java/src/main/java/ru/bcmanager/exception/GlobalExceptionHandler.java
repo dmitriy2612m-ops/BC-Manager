@@ -150,6 +150,12 @@ public class GlobalExceptionHandler {
      * @param exception исключение
      * @return ответ {@code 500 Internal Server Error}
      */
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<ApiError> handleNoResource(
+            org.springframework.web.servlet.resource.NoResourceFoundException exception) {
+        return build(HttpStatus.NOT_FOUND, "Ресурс не найден", List.of());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpected(Exception exception) {
         LOG.error("Необработанная ошибка REST API", exception);
