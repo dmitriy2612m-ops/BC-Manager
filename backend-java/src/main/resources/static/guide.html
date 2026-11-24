@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Как рассчитывается стоимость аренды, скидки, НДС 20% и пени в BC-Manager">
+  <title>Как считаются платежи — BC-Manager</title>
+  <link rel="icon" type="image/png" sizes="256x256" href="/assets/icon.png">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="portal-page">
+  <header class="portal-header">
+    <div class="portal-container portal-header-inner">
+      <a href="/" class="portal-brand" aria-label="BC-Manager — На главную">
+        <img src="/assets/logo.png" alt="BC-Manager" class="portal-logo-img">
+      </a>
+      <nav class="portal-nav" aria-label="Разделы портала">
+        <a href="/">Главная</a>
+        <a href="/guide.html" aria-current="page">Как считаются платежи</a>
+        <a href="/architecture.html">Порядок работы</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="portal-main">
+    <div class="portal-container portal-doc-stack">
+      <div class="portal-doc-intro">
+        <span class="portal-tag">Памятка по расчётам</span>
+        <h1>Как рассчитывается арендная плата, скидки за срок, НДС 20% и пени за просрочку</h1>
+        <p class="doc-lead">
+          При создании договора BC-Manager автоматически вычисляет ежемесячный платёж с точностью до копеек, чтобы арендодатель и арендатор сразу видели прозрачную разбивку стоимости.
+        </p>
+      </div>
+
+      <section class="card">
+        <h2>1. Коэффициенты, надбавки и эксплуатационные сборы</h2>
+        <p>
+          Итоговая стоимость аренды складывается из базовой ставки за квадратный метр, повышающего коэффициента типа помещения, доплаты за комплектацию и фиксированного эксплуатационного сбора на обслуживание здания.
+        </p>
+
+        <div class="formula-list" style="margin-bottom: 16px;">
+          <div class="formula-item">
+            <span class="formula-label">Ежемесячная плата до скидки и НДС</span>
+            <span class="formula-expr">Площадь × Базовая ставка × Коэффициент типа × (1 + Надбавка) + Площадь × Эксплуатационный сбор</span>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Тип помещения</th>
+                <th>Коэффициент</th>
+                <th>Доплата за комплектацию</th>
+                <th class="num">Эксплуатационный сбор, ₽/м² в мес.</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Офисное помещение</td>
+                <td class="tabular-nums">1,00</td>
+                <td>+10% при наличии мебели</td>
+                <td class="num tabular-nums">150,00</td>
+              </tr>
+              <tr>
+                <td>Торговая площадь</td>
+                <td class="tabular-nums">1,25</td>
+                <td>+15% при наличии витрины или отдельного входа</td>
+                <td class="num tabular-nums">200,00</td>
+              </tr>
+              <tr>
+                <td>Переговорная комната</td>
+                <td class="tabular-nums">1,15</td>
+                <td>Доплата не взимается (указывается вместимость)</td>
+                <td class="num tabular-nums">100,00</td>
+              </tr>
+              <tr>
+                <td>Парковочное место</td>
+                <td class="tabular-nums">1,00</td>
+                <td>+12% за крытое парковочное место</td>
+                <td class="num tabular-nums">50,00</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="portal-two-col">
+        <section class="card">
+          <h3>2. Скидка за длительность, НДС 20% и даты оплаты</h3>
+          <p>
+            Для долгосрочных договоров скидка применяется автоматически. При сроке аренды от 6 до 11 полных месяцев предоставляется скидка 5%, а при договоре от 12 месяцев — 10%.
+          </p>
+          <div class="formula-list" style="margin-bottom: 12px;">
+            <div class="formula-item">
+              <span class="formula-label">Сумма до налога</span>
+              <span class="formula-expr">Плата до скидки × (1 − Скидка за срок)</span>
+            </div>
+            <div class="formula-item">
+              <span class="formula-label">Итоговый платёж в месяц</span>
+              <span class="formula-expr">Сумма до налога + НДС 20%</span>
+            </div>
+          </div>
+          <h4>График выставления счетов</h4>
+          <p>
+            Первый платёж назначается на дату начала действия договора, а все последующие платежи выставляются на 5-е число каждого месяца.
+          </p>
+        </section>
+
+        <section class="card">
+          <h3>3. Расчёт пени при просрочке</h3>
+          <p>
+            Если счёт не оплачен полностью к контрольной дате, система вычисляет просрочку в днях и применяет ставку к непогашенному остатку задолженности.
+          </p>
+          <div class="formula-list" style="margin-bottom: 12px;">
+            <div class="formula-item">
+              <span class="formula-label">С 1-го по 30-й день просрочки</span>
+              <span class="formula-expr">Остаток долга × 0,1% за каждый день просрочки</span>
+            </div>
+            <div class="formula-item">
+              <span class="formula-label">Начиная с 31-го дня просрочки</span>
+              <span class="formula-expr">Остаток долга × 0,2% за каждый день свыше 30 дней</span>
+            </div>
+            <div class="formula-item">
+              <span class="formula-label">Максимальный предел начислений</span>
+              <span class="formula-expr">Не более 25% от непогашенного остатка долга</span>
+            </div>
+          </div>
+          <h4>Пример расчёта за 40 дней просрочки</h4>
+          <p>
+            Первые 30 дней дадут 3% (30 × 0,1%), а оставшиеся 10 дней — ещё 2% (10 × 0,2%). Итоговая пеня составит 5% от остатка долга.
+          </p>
+        </section>
+      </div>
+
+      <section class="card">
+        <h5>Навигация</h5>
+        <p class="doc-back-row">
+          <a href="/" class="btn btn-secondary btn-sm">Перейти ко входу и регистрации</a>
+          <a href="/architecture.html" class="btn btn-ghost btn-sm">Посмотреть порядок работы</a>
+        </p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

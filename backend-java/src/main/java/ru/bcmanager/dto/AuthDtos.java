@@ -29,10 +29,11 @@ public final class AuthDtos {
     }
 
     /**
-     * Запрос регистрации нового пользователя (только логин и пароль).
+     * Запрос регистрации нового пользователя (логин, пароль и ФИО, без почты).
      *
      * @param username логин (3–50 символов)
      * @param password пароль (4–100 символов)
+     * @param fullName ФИО пользователя (необязательно в API; если не задано — подставляется логин)
      */
     public record RegisterRequest(
             @NotBlank(message = "Логин обязателен")
@@ -44,7 +45,21 @@ public final class AuthDtos {
 
             @NotBlank(message = "Пароль обязателен")
             @Size(min = 4, max = 100, message = "Пароль должен содержать от 4 до 100 символов")
-            String password) {
+            String password,
+
+            @Size(max = 120, message = "ФИО не длиннее 120 символов")
+            String fullName) {
+    }
+
+    /**
+     * Запрос обновления ФИО текущего пользователя.
+     *
+     * @param fullName новое ФИО (2–120 символов)
+     */
+    public record UpdateProfileRequest(
+            @NotBlank(message = "Укажите ФИО")
+            @Size(min = 2, max = 120, message = "ФИО должно содержать от 2 до 120 символов")
+            String fullName) {
     }
 
     /**
@@ -64,6 +79,22 @@ public final class AuthDtos {
             String fullName,
             String role,
             long expiresInMinutes) {
+    }
+
+    /**
+     * Запрос смены пароля текущего авторизованного пользователя.
+     *
+     * @param currentPassword текущий пароль
+     * @param newPassword     новый пароль (4–100 символов)
+     */
+    public record ChangePasswordRequest(
+            @NotBlank(message = "Текущий пароль обязателен")
+            @Size(max = 100, message = "Текущий пароль не длиннее 100 символов")
+            String currentPassword,
+
+            @NotBlank(message = "Новый пароль обязателен")
+            @Size(min = 4, max = 100, message = "Новый пароль должен содержать от 4 до 100 символов")
+            String newPassword) {
     }
 
     /**

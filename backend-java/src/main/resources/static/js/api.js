@@ -205,8 +205,15 @@ export async function downloadFile(path, fallbackName) {
 export const api = {
   login: (username, password) =>
     request('/auth/login', { method: 'POST', body: { username, password } }),
-  register: (username, password) =>
-    request('/auth/register', { method: 'POST', body: { username, password } }),
+  register: (username, password, fullName) =>
+    request('/auth/register', { method: 'POST', body: { username, password, fullName } }),
+  updateProfile: (fullName) =>
+    request('/auth/profile', { method: 'PUT', body: { fullName } }),
+  changePassword: (currentPassword, newPassword) =>
+    request('/auth/change-password', {
+      method: 'POST',
+      body: { currentPassword, newPassword },
+    }),
   me: () => request('/auth/me'),
 
   premises: {

@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import ru.bcmanager.domain.User;
 import ru.bcmanager.domain.enums.Role;
@@ -103,10 +104,13 @@ public class AuthController {
         if (userRepository.existsByUsernameIgnoreCase(username)) {
             throw new IllegalStateException("Логин «" + username + "» уже занят");
         }
+        String fullName = request.fullName() != null && !request.fullName().isBlank()
+                ? request.fullName().trim()
+                : username;
         User user = new User(
                 username,
                 passwordEncoder.encode(request.password()),
-                username,
+                fullName,
                 Role.ADMIN);
         user.setPersonalWorkspace(true);
         User saved = userRepository.save(user);
@@ -137,6 +141,78 @@ public class AuthController {
         User user = requireUser(authentication.getName());
         return new AuthDtos.CurrentUserResponse(
                 user.getUsername(), user.getFullName(), user.getRole().name());
+    }
+
+    /**
+     * Смена пароля текущего авторизованного пользователя.
+     *
+     * @param request        текущий и новый пароли
+     * @param authentication текущая аутентификация
+     * @return обновлённый JWT и данные пользователя
+     */
+    @PostMapping("/change-password")
+    @PreAuthorize("isAuthenticated()")
+    @Transactional
+    @Operation(summary = "Смена пароля текущего пользователя")
+    public ResponseEntity<AuthDtos.LoginResponse> changePassword(
+            @Valid @RequestBody AuthDtos.ChangePasswordRequest request,
+            Authentication authentication) {
+        if (authentication == null) {
+            throw new org.springframework.security.authentication.BadCredentialsException(
+                    "Требуется авторизация");
+        }
+        User user = requireUser(authentication.getName());
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new IllegalArgumentException("Неверный текущий пароль");
+        }
+        if (request.newPassword().equals(request.currentPassword())) {
+            throw new IllegalArgumentException("Новый пароль должен отличаться от текущего");
+        }
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        User saved = userRepository.save(user);
+        String token = jwtService.generateToken(saved);
+        return ResponseEntity.ok(new AuthDtos.LoginResponse(
+                token,
+                "Bearer",
+                saved.getUsername(),
+                saved.getFullName(),
+                saved.getRole().name(),
+                jwtService.getExpirationMinutes()));
+    }
+
+    /**
+     * Обновление ФИО текущего авторизованного пользователя.
+     *
+     * @param request        новое ФИО
+     * @param authentication текущая аутентификация
+     * @return обновлённый JWT и данные пользователя
+     */
+    @RequestMapping(path = "/profile", method = {RequestMethod.PUT, RequestMethod.PATCH})
+    @PreAuthorize("isAuthenticated()")
+    @Transactional
+    @Operation(summary = "Обновление ФИО текущего пользователя")
+    public ResponseEntity<AuthDtos.LoginResponse> updateProfile(
+            @Valid @RequestBody AuthDtos.UpdateProfileRequest request,
+            Authentication authentication) {
+        if (authentication == null) {
+            throw new org.springframework.security.authentication.BadCredentialsException(
+                    "Требуется авторизация");
+        }
+        String fullName = request.fullName().trim();
+        if (fullName.length() < 2) {
+            throw new IllegalArgumentException("ФИО должно содержать от 2 до 120 символов");
+        }
+        User user = requireUser(authentication.getName());
+        user.setFullName(fullName);
+        User saved = userRepository.save(user);
+        String token = jwtService.generateToken(saved);
+        return ResponseEntity.ok(new AuthDtos.LoginResponse(
+                token,
+                "Bearer",
+                saved.getUsername(),
+                saved.getFullName(),
+                saved.getRole().name(),
+                jwtService.getExpirationMinutes()));
     }
 
     /**

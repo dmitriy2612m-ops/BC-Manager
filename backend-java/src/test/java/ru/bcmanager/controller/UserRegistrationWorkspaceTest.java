@@ -4,6 +4,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -270,6 +271,151 @@ class UserRegistrationWorkspaceTest {
 
         mockMvc.perform(get("/api/v1/premises/" + sharedPremises.getId()).header("Authorization", "Bearer " + secondToken))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("POST /auth/change-password: меняет пароль, отклоняет старый и валидирует ошибки")
+    void changePasswordUpdatesCredentialsAndValidatesErrors() throws Exception {
+        String token = registerAndGetToken("pwd_user", "oldPass123");
+
+        // Неверный текущий пароль → 400 Bad Request.
+        mockMvc.perform(post("/api/v1/auth/change-password")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"currentPassword":"wrongPassword","newPassword":"newPass456"}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Неверный текущий пароль"));
+
+        // Новый пароль совпадает со старым → 400 Bad Request.
+        mockMvc.perform(post("/api/v1/auth/change-password")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"currentPassword":"oldPass123","newPassword":"oldPass123"}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Новый пароль должен отличаться от текущего"));
+
+        // Без авторизации → 401 Unauthorized.
+        mockMvc.perform(post("/api/v1/auth/change-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"currentPassword":"oldPass123","newPassword":"newPass456"}
+                                """))
+                .andExpect(status().isUnauthorized());
+
+        // Успешная смена пароля → 200 OK + новый JWT.
+        MvcResult changed = mockMvc.perform(post("/api/v1/auth/change-password")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"currentPassword":"oldPass123","newPassword":"newPass456"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token", notNullValue()))
+                .andExpect(jsonPath("$.username").value("pwd_user"))
+                .andReturn();
+        String refreshedToken = objectMapper.readTree(changed.getResponse().getContentAsString())
+                .get("token").asText();
+
+        mockMvc.perform(get("/api/v1/auth/me")
+                        .header("Authorization", "Bearer " + refreshedToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("pwd_user"));
+
+        // Прежний токен, выданный до смены пароля, больше не принимается → 401.
+        mockMvc.perform(get("/api/v1/auth/me")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized());
+
+        // Старый пароль больше не принимается при входе.
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"username":"pwd_user","password":"oldPass123"}
+                                """))
+                .andExpect(status().isUnauthorized());
+
+        // Новый пароль успешно проходит аутентификацию.
+        String reloginToken = loginAndGetToken("pwd_user", "newPass456");
+        mockMvc.perform(get("/api/v1/auth/me")
+                        .header("Authorization", "Bearer " + reloginToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("pwd_user"));
+    }
+
+    @Test
+    @DisplayName("Публичные страницы справки доступны без авторизации, а Swagger закрыт")
+    void publicDocumentationPagesAreAccessibleAndSwaggerIsClosed() throws Exception {
+        mockMvc.perform(get("/")).andExpect(status().isOk());
+        mockMvc.perform(get("/guide.html")).andExpect(status().isOk());
+        mockMvc.perform(get("/architecture.html")).andExpect(status().isOk());
+
+        mockMvc.perform(get("/swagger-ui.html")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/v3/api-docs")).andExpect(status().isUnauthorized());
+
+        String token = loginAndGetToken("admin", "secret123");
+        mockMvc.perform(get("/swagger-ui.html").header("Authorization", "Bearer " + token))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/v3/api-docs").header("Authorization", "Bearer " + token))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Регистрация с ФИО и обновление ФИО в личном кабинете")
+    void registrationStoresFullNameAndProfileUpdateChangesIt() throws Exception {
+        MvcResult regResult = mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"username":"fio_user","password":"pass1234","fullName":"Сидорова Анна Сергеевна"}
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.username").value("fio_user"))
+                .andExpect(jsonPath("$.fullName").value("Сидорова Анна Сергеевна"))
+                .andReturn();
+        String token = objectMapper.readTree(regResult.getResponse().getContentAsString())
+                .get("token").asText();
+
+        mockMvc.perform(get("/api/v1/auth/me").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fullName").value("Сидорова Анна Сергеевна"));
+
+        // Пустое / слишком короткое ФИО → 400 Bad Request.
+        mockMvc.perform(put("/api/v1/auth/profile")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"fullName":" "}
+                                """))
+                .andExpect(status().isBadRequest());
+
+        // Без авторизации → 401 Unauthorized.
+        mockMvc.perform(put("/api/v1/auth/profile")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"fullName":"Иванов Иван"}
+                                """))
+                .andExpect(status().isUnauthorized());
+
+        // Успешное изменение ФИО → 200 OK.
+        MvcResult updated = mockMvc.perform(put("/api/v1/auth/profile")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"fullName":"Петрова Анна Сергеевна"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fullName").value("Петрова Анна Сергеевна"))
+                .andExpect(jsonPath("$.token", notNullValue()))
+                .andReturn();
+        String updatedToken = objectMapper.readTree(updated.getResponse().getContentAsString())
+                .get("token").asText();
+
+        mockMvc.perform(get("/api/v1/auth/me").header("Authorization", "Bearer " + updatedToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fullName").value("Петрова Анна Сергеевна"));
     }
 
     private String registerAndGetToken(String username, String password) throws Exception {

@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: bc-manager-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-bc_manager}
+      POSTGRES_USER: ${DB_USER:-bc_manager_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-bc_manager_local_2026_strong_pwd}
+    volumes:
+      - bc_manager_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-bc_manager_user} -d ${DB_NAME:-bc_manager}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: ./backend-java
+      dockerfile: Dockerfile
+    container_name: bc-manager-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${SERVER_PORT:-8080}:8080"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-bc_manager}
+      DB_USER: ${DB_USER:-bc_manager_user}
+      DB_PASSWORD: ${DB_PASSWORD:-bc_manager_local_2026_strong_pwd}
+      JWT_SECRET: ${JWT_SECRET:-local-bc-manager-jwt-signing-secret-change-in-prod-9f8e7d6c5b4a}
+      SERVER_PORT: 8080
+
+volumes:
+  bc_manager_pgdata:

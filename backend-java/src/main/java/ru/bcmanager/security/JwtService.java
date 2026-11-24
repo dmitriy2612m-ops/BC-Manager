@@ -31,6 +31,9 @@ public class JwtService {
     /** Претензия с ФИО пользователя. */
     public static final String CLAIM_FULL_NAME = "fullName";
 
+    /** Претензия с отпечатком хэша пароля для отзыва старых токенов после смены пароля. */
+    public static final String CLAIM_PWD_VER = "pwdVer";
+
     private final SecretKey signingKey;
 
     private final long expirationMinutes;
@@ -66,10 +69,44 @@ public class JwtService {
                 .subject(user.getUsername())
                 .claim(CLAIM_ROLE, user.getRole().name())
                 .claim(CLAIM_FULL_NAME, user.getFullName())
+                .claim(CLAIM_PWD_VER, passwordFingerprint(user.getPasswordHash()))
                 .issuedAt(Date.from(issuedAt))
                 .expiration(Date.from(expiresAt))
                 .signWith(signingKey)
                 .compact();
+    }
+
+    /**
+     * Извлечь отпечаток версии пароля из токена.
+     *
+     * @param token JWT
+     * @return отпечаток пароля или {@code null}
+     */
+    public String extractPasswordVersion(String token) {
+        return extractClaim(token, claims -> claims.get(CLAIM_PWD_VER, String.class));
+    }
+
+    /**
+     * Проверить, соответствует ли токен текущему хэшу пароля пользователя.
+     *
+     * @param token        JWT
+     * @param passwordHash текущий BCrypt-хэш пользователя в БД
+     * @return {@code true}, если пароль не менялся с момента выпуска токена
+     */
+    public boolean matchesPasswordHash(String token, String passwordHash) {
+        String tokenVer = extractPasswordVersion(token);
+        return tokenVer != null && tokenVer.equals(passwordFingerprint(passwordHash));
+    }
+
+    private static String passwordFingerprint(String passwordHash) {
+        try {
+            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(
+                    (passwordHash == null ? "" : passwordHash).getBytes(StandardCharsets.UTF_8));
+            return java.util.HexFormat.of().formatHex(hash).substring(0, 16);
+        } catch (java.security.NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 недоступен", exception);
+        }
     }
 
     /**

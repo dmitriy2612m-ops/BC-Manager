@@ -36,15 +36,14 @@ public class SecurityConfig {
     private static final String[] PUBLIC_PATHS = {
         "/",
         "/index.html",
+        "/guide.html",
+        "/architecture.html",
         "/favicon.ico",
         "/css/**",
         "/js/**",
         "/assets/**",
         "/api/v1/auth/login",
         "/api/v1/auth/register",
-        "/v3/api-docs/**",
-        "/swagger-ui.html",
-        "/swagger-ui/**",
         "/error"
     };
 

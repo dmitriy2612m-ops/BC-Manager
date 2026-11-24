@@ -13,15 +13,19 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import ru.bcmanager.domain.User;
+import ru.bcmanager.repository.UserRepository;
 
 /**
  * Фильтр, восстанавливающий аутентификацию из заголовка
  * {@code Authorization: Bearer <JWT>} (Plan.md, раздел 5.1).
  *
- * <p>Если токен валиден, в {@link SecurityContextHolder} помещается
- * аутентификация с ролью {@code ROLE_ADMIN} или {@code ROLE_MANAGER}.
- * Некорректный или просроченный токен просто игнорируется — дальнейшее
- * решение принимают правила безопасности (возврат {@code 401}).
+ * <p>Если токен валиден, пользователь существует в БД и его пароль не менялся
+ * после выпуска токена, в {@link SecurityContextHolder} помещается
+ * аутентификация с актуальной ролью из БД ({@code ROLE_ADMIN} или
+ * {@code ROLE_MANAGER}). Некорректный, просроченный или отозванный токен
+ * игнорируется — дальнейшее решение принимают правила безопасности (возврат
+ * {@code 401}).
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -33,13 +37,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
 
+    private final UserRepository userRepository;
+
     /**
      * Создать фильтр JWT.
      *
-     * @param jwtService сервис разбора токенов
+     * @param jwtService     сервис разбора токенов
+     * @param userRepository репозиторий пользователей
      */
-    public JwtAuthenticationFilter(JwtService jwtService) {
+    public JwtAuthenticationFilter(JwtService jwtService, UserRepository userRepository) {
         this.jwtService = jwtService;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -55,16 +63,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = header.substring(BEARER_PREFIX.length()).trim();
             if (jwtService.isValid(token)) {
                 String username = jwtService.extractUsername(token);
-                String role = jwtService.extractRole(token);
-                List<SimpleGrantedAuthority> authorities = role == null
-                        ? List.of()
-                        : List.of(new SimpleGrantedAuthority(ROLE_PREFIX + role));
+                User user = username == null
+                        ? null
+                        : userRepository.findByUsername(username).orElse(null);
+                if (user != null && jwtService.matchesPasswordHash(token, user.getPasswordHash())) {
+                    List<SimpleGrantedAuthority> authorities = List.of(
+                            new SimpleGrantedAuthority(ROLE_PREFIX + user.getRole().name()));
 
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(username, null, authorities);
-                authentication.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    user.getUsername(), null, authorities);
+                    authentication.setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
             }
         }
         filterChain.doFilter(request, response);

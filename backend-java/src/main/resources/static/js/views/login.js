@@ -1,17 +1,14 @@
 /**
- * Экран приветствия и авторизации (вход и регистрация по логину и паролю).
- *
- * Форма расположена в правом верхнем блоке стартовой страницы и поддерживает
- * переключение между режимами «Вход» и «Регистрация» (без электронной почты).
+ * Экран приветствия и авторизации (вход и регистрация по логину, ФИО и паролю).
  */
 
-const LOGIN_HINT = 'Введите логин и пароль учётной записи';
-const REGISTER_HINT = 'Создаётся пустой личный аккаунт (только логин и пароль, без почты)';
+const LOGIN_HINT = 'Введите логин и пароль.';
+const REGISTER_HINT = 'Создаётся личный кабинет: укажите ФИО, логин и пароль.';
 
 /**
  * Инициализировать форму входа и регистрации на стартовой странице.
  *
- * @param {{onSubmit: (mode: 'login'|'register', username: string, password: string) => Promise<void>}} options
+ * @param {{onSubmit: (mode: 'login'|'register', username: string, password: string, fullName: string) => Promise<void>}} options
  *        обработчик отправки формы
  */
 export function renderLogin({ onSubmit }) {
@@ -19,6 +16,8 @@ export function renderLogin({ onSubmit }) {
   const authCard = document.getElementById('auth-card');
   const errorBox = document.getElementById('login-error');
   const submitBtn = document.getElementById('auth-submit-btn') || form.querySelector('button[type="submit"]');
+  const fullNameField = document.getElementById('register-fullname-field');
+  const fullNameInput = form.elements.namedItem('fullName');
   const usernameInput = form.elements.namedItem('username');
   const passwordInput = form.elements.namedItem('password');
   const tabLogin = document.getElementById('auth-tab-login');
@@ -51,6 +50,16 @@ export function renderLogin({ onSubmit }) {
       tabRegister.setAttribute('aria-selected', String(isRegister));
     }
 
+    if (fullNameField) {
+      fullNameField.hidden = !isRegister;
+    }
+    if (fullNameInput) {
+      fullNameInput.required = isRegister;
+      if (!isRegister) {
+        fullNameInput.value = '';
+      }
+    }
+
     if (passwordInput) {
       passwordInput.autocomplete = isRegister ? 'new-password' : 'current-password';
       passwordInput.placeholder = isRegister ? 'Минимум 4 символа' : '••••••••';
@@ -72,7 +81,7 @@ export function renderLogin({ onSubmit }) {
 
     if (focusInput) {
       authCard?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      usernameInput?.focus();
+      (isRegister ? fullNameInput || usernameInput : usernameInput)?.focus();
     }
   }
 
@@ -91,8 +100,22 @@ export function renderLogin({ onSubmit }) {
   form.onsubmit = async (event) => {
     event.preventDefault();
 
+    const fullName = String(fullNameInput?.value || '').trim();
     const username = String(usernameInput?.value || '').trim();
     const password = String(passwordInput?.value || '');
+
+    if (mode === 'register') {
+      if (fullName.length < 2) {
+        showError('Укажите ФИО (не менее 2 символов)');
+        fullNameInput?.focus();
+        return;
+      }
+      if (fullName.length > 120) {
+        showError('ФИО не должно превышать 120 символов');
+        fullNameInput?.focus();
+        return;
+      }
+    }
 
     if (!username || !password) {
       showError('Введите логин и пароль');
@@ -124,7 +147,7 @@ export function renderLogin({ onSubmit }) {
     }
 
     try {
-      await onSubmit(mode, username, password);
+      await onSubmit(mode, username, password, fullName);
       form.reset();
     } catch (error) {
       showError(

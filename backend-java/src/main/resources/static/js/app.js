@@ -15,6 +15,7 @@ import { renderTenants } from './views/tenants.js';
 import { renderContracts } from './views/contracts.js';
 import { renderPayments } from './views/payments.js';
 import { renderMaintenance } from './views/maintenance.js';
+import { renderProfile } from './views/profile.js';
 
 /** Маршруты приложения (Сессии 7–8). */
 const ROUTES = {
@@ -48,6 +49,11 @@ const ROUTES = {
     render: renderMaintenance,
     roles: ['ADMIN', 'MANAGER'],
   },
+  profile: {
+    title: 'Личный кабинет',
+    render: renderProfile,
+    roles: ['ADMIN', 'MANAGER'],
+  },
 };
 
 const DEFAULT_ROUTE = 'dashboard';
@@ -58,6 +64,7 @@ const viewRoot = document.getElementById('view-root');
 const pageTitle = document.getElementById('page-title');
 const userName = document.getElementById('user-name');
 const userRole = document.getElementById('user-role');
+const profileBtn = document.getElementById('profile-btn');
 const logoutBtn = document.getElementById('logout-btn');
 const nav = document.getElementById('sidebar-nav');
 const sidebar = document.getElementById('sidebar');
@@ -69,6 +76,11 @@ function setSidebarOpen(open) {
   if (sidebarBackdrop) {
     sidebarBackdrop.hidden = !open;
   }
+  sidebarToggle?.setAttribute('aria-expanded', String(open));
+}
+
+function isMobileLayout() {
+  return window.matchMedia('(max-width: 860px)').matches;
 }
 
 /** Текущий активный маршрут (нужен для защиты от гонок при быстром клике). */
@@ -86,9 +98,9 @@ function showLogin() {
   document.title = 'BC-Manager — Управление бизнес-центром';
   closeModalIfOpen();
   renderLogin({
-    onSubmit: async (mode, username, password) => {
+    onSubmit: async (mode, username, password, fullName) => {
       const data = mode === 'register'
-        ? await apiClient.api.register(username, password)
+        ? await apiClient.api.register(username, password, fullName)
         : await apiClient.api.login(username, password);
       apiClient.saveSession(data);
       if (mode === 'register') {
@@ -130,7 +142,11 @@ function renderUserChrome(user) {
  */
 function parseHash() {
   const raw = window.location.hash.replace(/^#\/?/, '').split('?')[0].trim();
-  return raw && ROUTES[raw] ? raw : DEFAULT_ROUTE;
+  if (raw && ROUTES[raw]) {
+    return raw;
+  }
+  const viewParam = new URLSearchParams(window.location.search).get('view');
+  return viewParam && ROUTES[viewParam] ? viewParam : DEFAULT_ROUTE;
 }
 
 /** Флаг: переход с контекстом уже отрисован, hashchange не должен перерисовывать. */
@@ -287,10 +303,32 @@ window.addEventListener('bc:unauthorized', () => {
   toast('Сессия истекла. Войдите снова.', 'error');
 });
 
+window.addEventListener('bc:user-updated', (event) => {
+  if (event.detail) {
+    renderUserChrome(event.detail);
+  }
+});
+
+nav?.querySelectorAll('.nav-link[data-route]').forEach((link) => {
+  link.addEventListener('click', (event) => {
+    event.preventDefault();
+    navigate(link.dataset.route);
+  });
+});
+
+profileBtn?.addEventListener('click', () => {
+  navigate('profile');
+});
+
 logoutBtn.addEventListener('click', logout);
 
 sidebarToggle?.addEventListener('click', () => {
-  setSidebarOpen(!sidebar.classList.contains('open'));
+  if (isMobileLayout()) {
+    setSidebarOpen(!sidebar.classList.contains('open'));
+  } else {
+    const collapsed = appShell.classList.toggle('sidebar-collapsed');
+    sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
+  }
 });
 
 sidebarBackdrop?.addEventListener('click', () => {
