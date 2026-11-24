@@ -26,4 +26,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return {@code true}, если логин уже занят
      */
     boolean existsByUsername(String username);
+
+    /**
+     * Проверить существование логина без учёта регистра.
+     *
+     * @param username логин
+     * @return {@code true}, если логин уже занят
+     */
+    boolean existsByUsernameIgnoreCase(String username);
 }

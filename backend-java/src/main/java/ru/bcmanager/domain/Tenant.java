@@ -2,9 +2,12 @@ package ru.bcmanager.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -26,10 +29,14 @@ public class Tenant {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
+    private User owner;
+
     @Column(name = "company_name", nullable = false, length = 150)
     private String companyName;
 
-    @Column(name = "inn", nullable = false, unique = true, length = 12)
+    @Column(name = "inn", nullable = false, length = 12)
     private String inn;
 
     @Column(name = "contact_person", nullable = false, length = 120)
@@ -109,6 +116,14 @@ public class Tenant {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public User getOwner() {
+        return owner;
+    }
+
+    public void setOwner(User owner) {
+        this.owner = owner;
     }
 
     public String getCompanyName() {

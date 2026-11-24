@@ -39,6 +39,9 @@ public class User {
     @Column(name = "role", nullable = false, length = 20)
     private Role role;
 
+    @Column(name = "personal_workspace", nullable = false)
+    private boolean personalWorkspace = false;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -113,6 +116,14 @@ public class User {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public boolean isPersonalWorkspace() {
+        return personalWorkspace;
+    }
+
+    public void setPersonalWorkspace(boolean personalWorkspace) {
+        this.personalWorkspace = personalWorkspace;
     }
 
     public LocalDateTime getCreatedAt() {

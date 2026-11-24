@@ -123,4 +123,22 @@ public interface LeaseContractRepository extends JpaRepository<LeaseContract, Lo
     @Query("SELECT c FROM LeaseContract c JOIN FETCH c.premises JOIN FETCH c.tenant"
             + " LEFT JOIN FETCH c.createdBy WHERE c.id = :id")
     Optional<LeaseContract> findByIdWithDetails(@Param("id") Long id);
+
+    @Query("SELECT c FROM LeaseContract c JOIN FETCH c.premises JOIN FETCH c.tenant WHERE c.owner IS NULL")
+    List<LeaseContract> findAllSharedWithDetails();
+
+    @Query("SELECT c FROM LeaseContract c JOIN FETCH c.premises JOIN FETCH c.tenant WHERE c.owner.id = :ownerId")
+    List<LeaseContract> findAllByOwnerIdWithDetails(@Param("ownerId") Long ownerId);
+
+    @Query("SELECT c FROM LeaseContract c JOIN FETCH c.premises JOIN FETCH c.tenant"
+            + " LEFT JOIN FETCH c.createdBy WHERE c.id = :id AND c.owner IS NULL")
+    Optional<LeaseContract> findByIdSharedWithDetails(@Param("id") Long id);
+
+    @Query("SELECT c FROM LeaseContract c JOIN FETCH c.premises JOIN FETCH c.tenant"
+            + " LEFT JOIN FETCH c.createdBy WHERE c.id = :id AND c.owner.id = :ownerId")
+    Optional<LeaseContract> findByIdAndOwnerIdWithDetails(@Param("id") Long id, @Param("ownerId") Long ownerId);
+
+    boolean existsByContractNumberAndOwnerIsNull(String contractNumber);
+
+    boolean existsByContractNumberAndOwnerId(String contractNumber, Long ownerId);
 }

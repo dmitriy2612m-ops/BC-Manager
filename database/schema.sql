@@ -17,12 +17,13 @@ DROP TABLE IF EXISTS users CASCADE;
 -- 3.1. users
 -- -----------------------------------------------------------------------------
 CREATE TABLE users (
-    id            BIGSERIAL    PRIMARY KEY,
-    username      VARCHAR(50)  NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    full_name     VARCHAR(120) NOT NULL,
-    role          VARCHAR(20)  NOT NULL,
-    created_at    TIMESTAMP    NOT NULL DEFAULT NOW(),
+    id                 BIGSERIAL    PRIMARY KEY,
+    username           VARCHAR(50)  NOT NULL UNIQUE,
+    password_hash      VARCHAR(255) NOT NULL,
+    full_name          VARCHAR(120) NOT NULL,
+    role               VARCHAR(20)  NOT NULL,
+    personal_workspace BOOLEAN      NOT NULL DEFAULT FALSE,
+    created_at         TIMESTAMP    NOT NULL DEFAULT NOW(),
     CONSTRAINT chk_users_role CHECK (role IN ('ADMIN', 'MANAGER'))
 );
 
@@ -31,7 +32,8 @@ CREATE TABLE users (
 -- -----------------------------------------------------------------------------
 CREATE TABLE premises (
     id                 BIGSERIAL     PRIMARY KEY,
-    code               VARCHAR(30)   NOT NULL UNIQUE,
+    owner_id           BIGINT        NULL REFERENCES users(id) ON DELETE CASCADE,
+    code               VARCHAR(30)   NOT NULL,
     building           VARCHAR(50)   NOT NULL,
     floor              INTEGER       NOT NULL,
     premises_type      VARCHAR(20)   NOT NULL,
@@ -55,8 +57,9 @@ CREATE TABLE premises (
 -- -----------------------------------------------------------------------------
 CREATE TABLE tenants (
     id             BIGSERIAL    PRIMARY KEY,
+    owner_id       BIGINT       NULL REFERENCES users(id) ON DELETE CASCADE,
     company_name   VARCHAR(150) NOT NULL,
-    inn            VARCHAR(12)  NOT NULL UNIQUE,
+    inn            VARCHAR(12)  NOT NULL,
     contact_person VARCHAR(120) NOT NULL,
     phone          VARCHAR(30)  NOT NULL,
     email          VARCHAR(120) NOT NULL,
@@ -70,7 +73,8 @@ CREATE TABLE tenants (
 -- -----------------------------------------------------------------------------
 CREATE TABLE lease_contracts (
     id               BIGSERIAL     PRIMARY KEY,
-    contract_number  VARCHAR(40)   NOT NULL UNIQUE,
+    owner_id         BIGINT        NULL REFERENCES users(id) ON DELETE CASCADE,
+    contract_number  VARCHAR(40)   NOT NULL,
     premises_id      BIGINT        NOT NULL REFERENCES premises(id),
     tenant_id        BIGINT        NOT NULL REFERENCES tenants(id),
     start_date       DATE          NOT NULL,
@@ -113,6 +117,7 @@ CREATE TABLE payments (
 -- -----------------------------------------------------------------------------
 CREATE TABLE maintenance_requests (
     id          BIGSERIAL    PRIMARY KEY,
+    owner_id    BIGINT       NULL REFERENCES users(id) ON DELETE CASCADE,
     premises_id BIGINT       NOT NULL REFERENCES premises(id),
     tenant_id   BIGINT       NULL REFERENCES tenants(id),
     title       VARCHAR(150) NOT NULL,
@@ -128,8 +133,19 @@ CREATE TABLE maintenance_requests (
 );
 
 -- -----------------------------------------------------------------------------
--- 3.7. Индексы
+-- 3.7. Индексы и уникальность в рамках рабочего пространства
 -- -----------------------------------------------------------------------------
+CREATE UNIQUE INDEX uq_premises_code_shared ON premises (code) WHERE owner_id IS NULL;
+CREATE UNIQUE INDEX uq_premises_code_owner  ON premises (owner_id, code) WHERE owner_id IS NOT NULL;
+CREATE UNIQUE INDEX uq_tenants_inn_shared   ON tenants (inn) WHERE owner_id IS NULL;
+CREATE UNIQUE INDEX uq_tenants_inn_owner    ON tenants (owner_id, inn) WHERE owner_id IS NOT NULL;
+CREATE UNIQUE INDEX uq_contracts_number_shared ON lease_contracts (contract_number) WHERE owner_id IS NULL;
+CREATE UNIQUE INDEX uq_contracts_number_owner  ON lease_contracts (owner_id, contract_number) WHERE owner_id IS NOT NULL;
+
+CREATE INDEX idx_premises_owner            ON premises (owner_id);
+CREATE INDEX idx_tenants_owner             ON tenants (owner_id);
+CREATE INDEX idx_contracts_owner           ON lease_contracts (owner_id);
+CREATE INDEX idx_maintenance_owner         ON maintenance_requests (owner_id);
 CREATE INDEX idx_premises_type_status      ON premises (premises_type, status);
 CREATE INDEX idx_contracts_premises_dates  ON lease_contracts (premises_id, start_date, end_date);
 CREATE INDEX idx_contracts_status          ON lease_contracts (status);

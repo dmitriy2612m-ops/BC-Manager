@@ -5,61 +5,403 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="BC-Manager — веб-приложение для комплексного управления коммерческой недвижимостью бизнес-центра">
   <title>BC-Manager — Управление бизнес-центром</title>
+  <link rel="icon" type="image/png" sizes="256x256" href="/assets/icon.png">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="stylesheet" href="/css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
   <script type="module" src="/js/app.js"></script>
 </head>
 <body>
-  <!-- Экран входа -->
-  <section id="login-screen" class="login-screen" hidden>
-    <form id="login-form" class="login-card" novalidate>
-      <div class="login-logo">
-        <span class="login-logo-mark" aria-hidden="true">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 21h18"/>
-            <path d="M6 21V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v14"/>
-            <path d="M9 10h1"/>
-            <path d="M9 14h1"/>
-            <path d="M14 10h1"/>
-            <path d="M14 14h1"/>
-            <path d="M11 21v-3a1 1 0 0 1 1-1h0a1 1 0 0 1 1 1v3"/>
-          </svg>
-        </span>
+  <!-- Стартовая страница и окно входа / регистрации -->
+  <div id="login-screen" class="landing-page" hidden>
+    <header class="landing-header">
+      <div class="landing-container landing-header-inner">
+        <a href="#top" class="landing-brand" aria-label="BC-Manager — Управление бизнес-центром">
+          <img src="/assets/logo.png" alt="BC-Manager — Управление бизнес-центром" class="landing-logo-img">
+        </a>
+
+        <nav class="landing-nav" aria-label="Разделы главной страницы">
+          <a href="#about">О системе</a>
+          <a href="#features">Возможности</a>
+          <a href="#workflow">Как начать</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="top">
+      <!-- Первый экран: описание системы слева + окно входа/регистрации справа вверху -->
+      <section class="landing-hero">
+        <div class="landing-container landing-hero-grid">
+          <div class="landing-hero-copy">
+            <span class="landing-pill">Платформа для коммерческой недвижимости</span>
+            <h1>Управляйте помещениями, компаниями-арендаторами и договорами в одном окне</h1>
+            <p class="landing-lead">
+              <strong>BC-Manager</strong> — это веб-приложение для управляющих компаний и владельцев
+              бизнес-центров. Система объединяет каталог площадей, базу контрагентов, умный
+              подбор помещений, расчёт аренды с графиком платежей и очередь заявок на техобслуживание.
+            </p>
+
+            <ul class="landing-highlights">
+              <li>
+                <span class="highlight-dot" aria-hidden="true"></span>
+                <span>Собственный пустой аккаунт сразу после регистрации — только логин и пароль</span>
+              </li>
+              <li>
+                <span class="highlight-dot" aria-hidden="true"></span>
+                <span>Все ваши помещения, компании и договоры сохраняются в PostgreSQL</span>
+              </li>
+              <li>
+                <span class="highlight-dot" aria-hidden="true"></span>
+                <span>Автоматический расчёт скидок, НДС, пени за просрочку и аналитика KPI</span>
+              </li>
+            </ul>
+
+            <!-- Векторная иллюстрация бизнес-центра и аналитического кабинета -->
+            <div class="landing-hero-illustration" aria-hidden="true">
+              <svg viewBox="0 0 640 280" fill="none" xmlns="http://www.w3.org/2000/svg" role="img">
+                <defs>
+                  <linearGradient id="heroBgGrad" x1="0" y1="0" x2="640" y2="280" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#E6F4F1"/>
+                    <stop offset="100%" stop-color="#E8F0F8"/>
+                  </linearGradient>
+                  <linearGradient id="towerGrad" x1="120" y1="30" x2="120" y2="245" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#1E293B"/>
+                    <stop offset="100%" stop-color="#334155"/>
+                  </linearGradient>
+                  <linearGradient id="wingGrad" x1="220" y1="88" x2="220" y2="245" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#0F766E"/>
+                    <stop offset="100%" stop-color="#115E59"/>
+                  </linearGradient>
+                </defs>
+
+                <rect width="640" height="280" rx="18" fill="url(#heroBgGrad)"/>
+                <circle cx="560" cy="48" r="64" fill="#0F766E" fill-opacity="0.08"/>
+                <circle cx="80" cy="230" r="76" fill="#0284C7" fill-opacity="0.07"/>
+
+                <!-- Линия земли -->
+                <line x1="28" y1="245" x2="612" y2="245" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round"/>
+
+                <!-- Архитектура бизнес-центра -->
+                <rect x="44" y="128" width="52" height="117" rx="6" fill="#CBD5E1"/>
+                <rect x="54" y="142" width="12" height="14" rx="2" fill="#F8FAFC"/>
+                <rect x="74" y="142" width="12" height="14" rx="2" fill="#F8FAFC"/>
+                <rect x="54" y="166" width="12" height="14" rx="2" fill="#F8FAFC"/>
+                <rect x="74" y="166" width="12" height="14" rx="2" fill="#F8FAFC"/>
+                <rect x="54" y="190" width="12" height="14" rx="2" fill="#F8FAFC"/>
+                <rect x="74" y="190" width="12" height="14" rx="2" fill="#F8FAFC"/>
+
+                <rect x="86" y="40" width="104" height="205" rx="8" fill="url(#towerGrad)"/>
+                <rect x="102" y="58" width="20" height="18" rx="3" fill="#99F6E4" fill-opacity="0.75"/>
+                <rect x="128" y="58" width="20" height="18" rx="3" fill="#E2E8F0" fill-opacity="0.85"/>
+                <rect x="154" y="58" width="20" height="18" rx="3" fill="#E2E8F0" fill-opacity="0.85"/>
+                <rect x="102" y="86" width="20" height="18" rx="3" fill="#E2E8F0" fill-opacity="0.85"/>
+                <rect x="128" y="86" width="20" height="18" rx="3" fill="#99F6E4" fill-opacity="0.75"/>
+                <rect x="154" y="86" width="20" height="18" rx="3" fill="#E2E8F0" fill-opacity="0.85"/>
+                <rect x="102" y="114" width="20" height="18" rx="3" fill="#E2E8F0" fill-opacity="0.85"/>
+                <rect x="128" y="114" width="20" height="18" rx="3" fill="#E2E8F0" fill-opacity="0.85"/>
+                <rect x="154" y="114" width="20" height="18" rx="3" fill="#99F6E4" fill-opacity="0.75"/>
+                <rect x="102" y="142" width="20" height="18" rx="3" fill="#99F6E4" fill-opacity="0.75"/>
+                <rect x="128" y="142" width="20" height="18" rx="3" fill="#E2E8F0" fill-opacity="0.85"/>
+                <rect x="154" y="142" width="20" height="18" rx="3" fill="#E2E8F0" fill-opacity="0.85"/>
+                <rect x="124" y="203" width="28" height="42" rx="4" fill="#0F766E"/>
+
+                <rect x="178" y="92" width="76" height="153" rx="8" fill="url(#wingGrad)"/>
+                <rect x="192" y="108" width="48" height="12" rx="3" fill="#CCFBF1" fill-opacity="0.85"/>
+                <rect x="192" y="130" width="48" height="12" rx="3" fill="#CCFBF1" fill-opacity="0.85"/>
+                <rect x="192" y="152" width="48" height="12" rx="3" fill="#CCFBF1" fill-opacity="0.65"/>
+                <rect x="192" y="174" width="48" height="12" rx="3" fill="#CCFBF1" fill-opacity="0.85"/>
+                <rect x="204" y="208" width="24" height="37" rx="3" fill="#134E4A"/>
+
+                <!-- Мини-панель аналитики справа на иллюстрации -->
+                <rect x="284" y="34" width="318" height="202" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+                <rect x="304" y="52" width="110" height="10" rx="5" fill="#1E293B"/>
+                <rect x="304" y="70" width="72" height="7" rx="3.5" fill="#94A3B8"/>
+                <rect x="520" y="50" width="62" height="24" rx="12" fill="#E6F4F1"/>
+                <rect x="532" y="59" width="38" height="6" rx="3" fill="#0F766E"/>
+
+                <!-- 3 KPI-миниблока -->
+                <rect x="304" y="92" width="86" height="52" rx="8" fill="#F8FAFC" stroke="#DDE5ED"/>
+                <rect x="314" y="102" width="44" height="6" rx="3" fill="#64748B"/>
+                <rect x="314" y="118" width="58" height="14" rx="4" fill="#0F766E"/>
+
+                <rect x="400" y="92" width="86" height="52" rx="8" fill="#F8FAFC" stroke="#DDE5ED"/>
+                <rect x="410" y="102" width="48" height="6" rx="3" fill="#64748B"/>
+                <rect x="410" y="118" width="60" height="14" rx="4" fill="#0284C7"/>
+
+                <rect x="496" y="92" width="86" height="52" rx="8" fill="#F8FAFC" stroke="#DDE5ED"/>
+                <rect x="506" y="102" width="42" height="6" rx="3" fill="#64748B"/>
+                <rect x="506" y="118" width="56" height="14" rx="4" fill="#1E293B"/>
+
+                <!-- Столбчатая диаграмма -->
+                <rect x="304" y="156" width="278" height="64" rx="8" fill="#F8FAFC" stroke="#DDE5ED"/>
+                <rect x="324" y="182" width="20" height="26" rx="4" fill="#94A3B8" fill-opacity="0.55"/>
+                <rect x="356" y="170" width="20" height="38" rx="4" fill="#0F766E"/>
+                <rect x="388" y="176" width="20" height="32" rx="4" fill="#0284C7"/>
+                <rect x="420" y="166" width="20" height="42" rx="4" fill="#0F766E"/>
+                <rect x="452" y="186" width="20" height="22" rx="4" fill="#94A3B8" fill-opacity="0.55"/>
+                <rect x="484" y="172" width="20" height="36" rx="4" fill="#0F766E"/>
+                <rect x="516" y="164" width="20" height="44" rx="4" fill="#0284C7"/>
+                <rect x="548" y="178" width="20" height="30" rx="4" fill="#0F766E"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Окошко входа / регистрации в правом верхнем углу -->
+          <aside class="landing-auth-wrap" id="auth-card" aria-label="Авторизация и регистрация">
+            <form id="login-form" class="login-card landing-auth-card" novalidate>
+              <div class="login-logo">
+                <span class="login-logo-mark" aria-hidden="true">
+                  <img src="/assets/icon.png" alt="" class="brand-icon-img">
+                </span>
+                <div>
+                  <h2>Личный кабинет</h2>
+                  <p class="login-subtitle">Доступ к вашему бизнес-центру</p>
+                </div>
+              </div>
+
+              <div class="auth-tabs" role="tablist" aria-label="Режим входа">
+                <button type="button" class="auth-tab active" role="tab" aria-selected="true" id="auth-tab-login">
+                  Вход
+                </button>
+                <button type="button" class="auth-tab" role="tab" aria-selected="false" id="auth-tab-register">
+                  Регистрация
+                </button>
+              </div>
+
+              <p class="auth-mode-hint" id="auth-mode-hint">
+                Введите логин и пароль учётной записи
+              </p>
+
+              <label class="field" for="login-username">
+                <span class="field-label">Логин</span>
+                <input type="text" id="login-username" name="username" autocomplete="username" placeholder="Введите логин" required>
+              </label>
+
+              <label class="field" for="login-password">
+                <span class="field-label">Пароль</span>
+                <input type="password" id="login-password" name="password" autocomplete="current-password" placeholder="••••••••" required>
+              </label>
+
+              <p id="login-error" class="form-error" role="alert" hidden></p>
+
+              <button type="submit" id="auth-submit-btn" class="btn btn-primary btn-block">
+                Войти в систему
+              </button>
+
+              <p class="auth-switch-row">
+                <span id="auth-switch-text">Нет аккаунта?</span>
+                <button type="button" class="auth-link-btn" id="auth-switch-btn">Зарегистрироваться</button>
+              </p>
+            </form>
+          </aside>
+        </div>
+      </section>
+
+      <!-- Раздел: О системе и кому она нужна -->
+      <section class="landing-section" id="about">
+        <div class="landing-container">
+          <div class="landing-section-head">
+            <span class="landing-pill">О приложении</span>
+            <h2>Зачем нужен BC-Manager</h2>
+            <p>
+              Вместо разрозненных таблиц и бумажных журналов вы получаете единую систему,
+              где связаны помещения, компании-арендаторы, договоры, начисления и обслуживание здания.
+            </p>
+          </div>
+
+          <div class="landing-cards-3">
+            <article class="landing-card">
+              <div class="landing-card-illustration" aria-hidden="true">
+                <svg viewBox="0 0 240 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="240" height="120" rx="12" fill="#EDF2F7"/>
+                  <rect x="24" y="20" width="84" height="80" rx="8" fill="#FFFFFF" stroke="#CBD5E1"/>
+                  <rect x="36" y="34" width="26" height="22" rx="4" fill="#0F766E" fill-opacity="0.16" stroke="#0F766E"/>
+                  <rect x="70" y="34" width="26" height="22" rx="4" fill="#0284C7" fill-opacity="0.15" stroke="#0284C7"/>
+                  <rect x="36" y="64" width="60" height="22" rx="4" fill="#E6F4F1"/>
+                  <rect x="122" y="26" width="94" height="14" rx="7" fill="#1E293B"/>
+                  <rect x="122" y="50" width="76" height="10" rx="5" fill="#94A3B8"/>
+                  <rect x="122" y="68" width="86" height="10" rx="5" fill="#94A3B8"/>
+                  <rect x="122" y="88" width="54" height="14" rx="7" fill="#0F766E"/>
+                </svg>
+              </div>
+              <h3>Единый реестр помещений</h3>
+              <p>
+                Ведите учёт офисов, торговых площадей, переговорных и парковочных мест с указанием
+                корпуса, этажа, площади, базовой ставки и статуса занятости.
+              </p>
+            </article>
+
+            <article class="landing-card">
+              <div class="landing-card-illustration" aria-hidden="true">
+                <svg viewBox="0 0 240 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="240" height="120" rx="12" fill="#EDF2F7"/>
+                  <rect x="24" y="22" width="192" height="76" rx="10" fill="#FFFFFF" stroke="#CBD5E1"/>
+                  <circle cx="58" cy="54" r="16" fill="#E6F4F1" stroke="#0F766E" stroke-width="2"/>
+                  <circle cx="58" cy="50" r="5" fill="#0F766E"/>
+                  <path d="M47 64c2.5-4 6.5-6 11-6s8.5 2 11 6" stroke="#0F766E" stroke-width="2" stroke-linecap="round"/>
+                  <rect x="88" y="38" width="108" height="10" rx="5" fill="#1E293B"/>
+                  <rect x="88" y="56" width="80" height="8" rx="4" fill="#64748B"/>
+                  <rect x="88" y="72" width="60" height="12" rx="6" fill="#EFF8FF"/>
+                  <rect x="156" y="72" width="44" height="12" rx="6" fill="#EEFBF3"/>
+                </svg>
+              </div>
+              <h3>Компании и арендаторы</h3>
+              <p>
+                Добавляйте собственные компании-арендаторы с ИНН, контактами и ответственными
+                лицами, отслеживайте активные договоры и историю начислений по каждому контрагенту.
+              </p>
+            </article>
+
+            <article class="landing-card">
+              <div class="landing-card-illustration" aria-hidden="true">
+                <svg viewBox="0 0 240 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="240" height="120" rx="12" fill="#EDF2F7"/>
+                  <rect x="24" y="20" width="192" height="80" rx="10" fill="#FFFFFF" stroke="#CBD5E1"/>
+                  <polyline points="42,80 78,60 112,68 150,42 198,34" stroke="#0F766E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle cx="78" cy="60" r="4" fill="#0F766E"/>
+                  <circle cx="150" cy="42" r="4" fill="#0F766E"/>
+                  <circle cx="198" cy="34" r="5" fill="#0284C7"/>
+                  <rect x="42" y="32" width="58" height="9" rx="4.5" fill="#1E293B"/>
+                  <rect x="42" y="46" width="42" height="7" rx="3.5" fill="#94A3B8"/>
+                </svg>
+              </div>
+              <h3>Контроль платежей и ТО</h3>
+              <p>
+                Автоматический график оплат по договору, пересчёт пени при просрочках и
+                приоритетная очередь заявок на техническое обслуживание с контролем сроков SLA.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Раздел: Возможности -->
+      <section class="landing-section landing-section-alt" id="features">
+        <div class="landing-container">
+          <div class="landing-section-head">
+            <span class="landing-pill">Функциональность</span>
+            <h2>Основные модули системы</h2>
+            <p>
+              Все инструменты доступны сразу после регистрации личного кабинета.
+            </p>
+          </div>
+
+          <div class="landing-features-grid">
+            <article class="feature-item">
+              <span class="feature-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="18" height="18" x="3" y="3" rx="2"/>
+                  <path d="M3 9h18"/><path d="M9 3v18"/>
+                </svg>
+              </span>
+              <h3>Реестр площадей</h3>
+              <p>Фильтры по типу, корпусу, этажу и статусу; расчёт базовой стоимости, OpEx и ставки с НДС.</p>
+            </article>
+
+            <article class="feature-item">
+              <span class="feature-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </span>
+              <h3>Умный подбор помещений</h3>
+              <p>Алгоритм оценивает свободные площади по бюджету, площади и датам, выставляя индекс Score 0–100.</p>
+            </article>
+
+            <article class="feature-item">
+              <span class="feature-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+              </span>
+              <h3>Компании и контрагенты</h3>
+              <p>Добавляйте своих арендаторов с проверкой ИНН, ищите по названию и открывайте карточку компании.</p>
+            </article>
+
+            <article class="feature-item">
+              <span class="feature-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+              </span>
+              <h3>Договоры и печатная форма</h3>
+              <p>Проверка пересечения дат, автоматические скидки за долгосрочную аренду и печатная форма договора.</p>
+            </article>
+
+            <article class="feature-item">
+              <span class="feature-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+                </svg>
+              </span>
+              <h3>Биллинг и пени</h3>
+              <p>Полная или частичная фиксация оплат и автоматический пересчёт пени на любую расчётную дату.</p>
+            </article>
+
+            <article class="feature-item">
+              <span class="feature-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                </svg>
+              </span>
+              <h3>Аналитика и заявки на ТО</h3>
+              <p>Графики загруженности по типам и этажам, выгрузка отчётов в CSV и SLA-приоритеты заявок.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Раздел: Как начать -->
+      <section class="landing-section" id="workflow">
+        <div class="landing-container">
+          <div class="landing-section-head">
+            <span class="landing-pill">Быстрый старт</span>
+            <h2>Три простых шага</h2>
+          </div>
+
+          <div class="landing-steps">
+            <div class="step-card">
+              <span class="step-num">1</span>
+              <h3>Зарегистрируйтесь без почты</h3>
+              <p>Откройте вкладку «Регистрация» в правом верхнем углу, введите логин и пароль — система сразу создаст ваш чистый аккаунт.</p>
+            </div>
+            <div class="step-card">
+              <span class="step-num">2</span>
+              <h3>Добавьте помещения и компании</h3>
+              <p>Заполните свои помещения и компании-арендаторов в соответствующих разделах, затем оформите договоры аренды.</p>
+            </div>
+            <div class="step-card">
+              <span class="step-num">3</span>
+              <h3>Возвращайтесь в любое время</h3>
+              <p>Все добавленные вами объекты, компании, платежи и заявки хранятся в базе данных и сохраняются при повторном входе.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="landing-footer">
+      <div class="landing-container landing-footer-inner">
         <div>
-          <h1>BC-Manager</h1>
-          <p class="login-subtitle">Управление бизнес-центром</p>
+          <strong>BC-Manager — учебный проект</strong>
+          <p>Учебный проект веб-приложения для управления коммерческой недвижимостью бизнес-центра.</p>
+        </div>
+        <div class="landing-footer-contact">
+          <span>Почта для связи:</span>
+          <a href="mailto:bc-manager@mail.ru">bc-manager@mail.ru</a>
         </div>
       </div>
-
-      <label class="field" for="login-username">
-        <span class="field-label">Логин</span>
-        <input type="text" id="login-username" name="username" autocomplete="username" placeholder="Введите логин" required>
-      </label>
-
-      <label class="field" for="login-password">
-        <span class="field-label">Пароль</span>
-        <input type="password" id="login-password" name="password" autocomplete="current-password" placeholder="••••••••" required>
-      </label>
-
-      <p id="login-error" class="form-error" role="alert" hidden></p>
-
-      <button type="submit" class="btn btn-primary btn-block">Войти в систему</button>
-    </form>
-  </section>
+    </footer>
+  </div>
 
   <!-- Приложение -->
   <div id="app-shell" class="app-shell" hidden>
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-brand">
         <span class="sidebar-logo-mark" aria-hidden="true">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 21h18"/>
-            <path d="M6 21V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v14"/>
-            <path d="M9 10h1"/>
-            <path d="M9 14h1"/>
-            <path d="M14 10h1"/>
-            <path d="M14 14h1"/>
-          </svg>
+          <img src="/assets/icon.png" alt="" class="brand-icon-img">
         </span>
         <span class="sidebar-brand-name">BC-Manager</span>
       </div>

@@ -106,8 +106,12 @@ async function request(path, options = {}) {
   }
 
   if (response.status === 401) {
-    notifyUnauthorized();
-    throw new ApiError(401, 'Сессия истекла. Войдите в систему заново.');
+    const isAuthAttempt = path === '/auth/login' || path === '/auth/register';
+    if (!isAuthAttempt) {
+      notifyUnauthorized();
+      throw new ApiError(401, 'Сессия истекла. Войдите в систему заново.');
+    }
+    throw await toApiError(response);
   }
 
   if (!response.ok) {
@@ -142,7 +146,12 @@ async function toApiError(response) {
         message = payload.message;
       }
       if (payload && Array.isArray(payload.details) && payload.details.length) {
-        message = `${message}: ${payload.details.join('; ')}`;
+        const formatted = payload.details
+          .map((item) => (typeof item === 'string' ? item : item?.message || item?.field || ''))
+          .filter(Boolean);
+        if (formatted.length) {
+          message = `${message}: ${formatted.join('; ')}`;
+        }
       }
     }
   } catch {
@@ -166,8 +175,12 @@ export async function downloadFile(path, fallbackName) {
 
   const response = await fetch(`${BASE_URL}${path}`, { headers });
   if (response.status === 401) {
-    notifyUnauthorized();
-    throw new ApiError(401, 'Сессия истекла. Войдите в систему заново.');
+    const isAuthAttempt = path === '/auth/login' || path === '/auth/register';
+    if (!isAuthAttempt) {
+      notifyUnauthorized();
+      throw new ApiError(401, 'Сессия истекла. Войдите в систему заново.');
+    }
+    throw await toApiError(response);
   }
   if (!response.ok) {
     throw await toApiError(response);
@@ -192,6 +205,8 @@ export async function downloadFile(path, fallbackName) {
 export const api = {
   login: (username, password) =>
     request('/auth/login', { method: 'POST', body: { username, password } }),
+  register: (username, password) =>
+    request('/auth/register', { method: 'POST', body: { username, password } }),
   me: () => request('/auth/me'),
 
   premises: {

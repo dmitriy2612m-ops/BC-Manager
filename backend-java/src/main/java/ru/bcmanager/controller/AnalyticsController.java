@@ -18,11 +18,11 @@ import ru.bcmanager.domain.MaintenanceRequest;
 import ru.bcmanager.domain.Payment;
 import ru.bcmanager.domain.premises.Premises;
 import ru.bcmanager.dto.AnalyticsDtos;
-import ru.bcmanager.repository.LeaseContractRepository;
-import ru.bcmanager.repository.MaintenanceRequestRepository;
-import ru.bcmanager.repository.PaymentRepository;
-import ru.bcmanager.repository.PremisesRepository;
 import ru.bcmanager.service.AnalyticsService;
+import ru.bcmanager.service.ContractService;
+import ru.bcmanager.service.MaintenanceService;
+import ru.bcmanager.service.PaymentService;
+import ru.bcmanager.service.PremisesService;
 
 /**
  * Аналитика и экспорт (Plan.md, раздел 5.7).
@@ -40,34 +40,34 @@ public class AnalyticsController {
 
     private final AnalyticsService analyticsService;
 
-    private final PremisesRepository premisesRepository;
+    private final PremisesService premisesService;
 
-    private final LeaseContractRepository contractRepository;
+    private final ContractService contractService;
 
-    private final PaymentRepository paymentRepository;
+    private final PaymentService paymentService;
 
-    private final MaintenanceRequestRepository maintenanceRepository;
+    private final MaintenanceService maintenanceService;
 
     /**
      * Создать контроллер аналитики.
      *
-     * @param analyticsService     сервис аналитики
-     * @param premisesRepository   репозиторий помещений
-     * @param contractRepository   репозиторий договоров
-     * @param paymentRepository    репозиторий платежей
-     * @param maintenanceRepository репозиторий заявок
+     * @param analyticsService   сервис аналитики
+     * @param premisesService    сервис помещений
+     * @param contractService    сервис договоров
+     * @param paymentService     сервис платежей
+     * @param maintenanceService сервис заявок
      */
     public AnalyticsController(
             AnalyticsService analyticsService,
-            PremisesRepository premisesRepository,
-            LeaseContractRepository contractRepository,
-            PaymentRepository paymentRepository,
-            MaintenanceRequestRepository maintenanceRepository) {
+            PremisesService premisesService,
+            ContractService contractService,
+            PaymentService paymentService,
+            MaintenanceService maintenanceService) {
         this.analyticsService = analyticsService;
-        this.premisesRepository = premisesRepository;
-        this.contractRepository = contractRepository;
-        this.paymentRepository = paymentRepository;
-        this.maintenanceRepository = maintenanceRepository;
+        this.premisesService = premisesService;
+        this.contractService = contractService;
+        this.paymentService = paymentService;
+        this.maintenanceService = maintenanceService;
     }
 
     /**
@@ -82,10 +82,10 @@ public class AnalyticsController {
             @RequestParam(required = false) LocalDate asOf) {
         LocalDate reportDate = asOf == null ? LocalDate.now() : asOf;
 
-        List<Premises> premisesList = premisesRepository.findAll();
-        List<LeaseContract> contracts = contractRepository.findAllWithDetails();
-        List<Payment> payments = paymentRepository.findAll();
-        List<MaintenanceRequest> requests = maintenanceRepository.findAll();
+        List<Premises> premisesList = premisesService.findAllInWorkspace();
+        List<LeaseContract> contracts = contractService.findAllInWorkspaceWithDetails();
+        List<Payment> payments = paymentService.findAllInWorkspace();
+        List<MaintenanceRequest> requests = maintenanceService.findAll();
 
         AnalyticsService.AnalyticsSummary summary = analyticsService.compute(
                 premisesList, contracts, payments, requests, reportDate);
@@ -138,8 +138,8 @@ public class AnalyticsController {
     @Operation(summary = "Экспорт реестра договоров в CSV (UTF-8 с BOM)")
     public ResponseEntity<byte[]> exportContractsCsv() {
         String csv = analyticsService.contractsCsv(
-                contractRepository.findAllWithDetails(),
-                premisesRepository.findAll(),
+                contractService.findAllInWorkspaceWithDetails(),
+                premisesService.findAllInWorkspace(),
                 true);
         return csvResponse("contracts.csv", csv);
     }
@@ -152,7 +152,7 @@ public class AnalyticsController {
     @GetMapping("/export/premises/csv")
     @Operation(summary = "Экспорт реестра помещений в CSV (UTF-8 с BOM)")
     public ResponseEntity<byte[]> exportPremisesCsv() {
-        String csv = analyticsService.premisesCsv(premisesRepository.findAll(), true);
+        String csv = analyticsService.premisesCsv(premisesService.findAllInWorkspace(), true);
         return csvResponse("premises.csv", csv);
     }
 

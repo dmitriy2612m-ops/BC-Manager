@@ -25,16 +25,35 @@ public class PremisesService {
 
     private final LeaseContractRepository contractRepository;
 
+    private final WorkspaceContextService workspaceContext;
+
     /**
      * Создать сервис помещений.
      *
      * @param premisesRepository репозиторий помещений
      * @param contractRepository репозиторий договоров
+     * @param workspaceContext   контекст рабочего пространства
      */
     public PremisesService(
-            PremisesRepository premisesRepository, LeaseContractRepository contractRepository) {
+            PremisesRepository premisesRepository,
+            LeaseContractRepository contractRepository,
+            WorkspaceContextService workspaceContext) {
         this.premisesRepository = premisesRepository;
         this.contractRepository = contractRepository;
+        this.workspaceContext = workspaceContext;
+    }
+
+    /**
+     * Все помещения текущего рабочего пространства.
+     *
+     * @return список помещений
+     */
+    @Transactional(readOnly = true)
+    public List<Premises> findAllInWorkspace() {
+        Long ownerId = workspaceContext.effectiveOwnerId();
+        return ownerId == null
+                ? premisesRepository.findByOwnerIsNull()
+                : premisesRepository.findByOwnerId(ownerId);
     }
 
     /**
@@ -57,7 +76,7 @@ public class PremisesService {
             java.math.BigDecimal minArea,
             java.math.BigDecimal maxArea) {
         List<Premises> result = new ArrayList<>();
-        for (Premises premises : premisesRepository.findAll()) {
+        for (Premises premises : findAllInWorkspace()) {
             if (type != null && premises.getPremisesType() != type) {
                 continue;
             }
@@ -93,7 +112,11 @@ public class PremisesService {
      */
     @Transactional(readOnly = true)
     public Premises findById(Long id) {
-        return premisesRepository.findById(id).orElseThrow(() -> new java.util.NoSuchElementException(
+        Long ownerId = workspaceContext.effectiveOwnerId();
+        java.util.Optional<Premises> found = ownerId == null
+                ? premisesRepository.findByIdAndOwnerIsNull(id)
+                : premisesRepository.findByIdAndOwnerId(id, ownerId);
+        return found.orElseThrow(() -> new java.util.NoSuchElementException(
                 "Помещение с id=" + id + " не найдено"));
     }
 
@@ -105,10 +128,15 @@ public class PremisesService {
      */
     @Transactional
     public Premises create(Premises premises) {
-        if (premisesRepository.existsByCode(premises.getCode())) {
+        Long ownerId = workspaceContext.effectiveOwnerId();
+        boolean exists = ownerId == null
+                ? premisesRepository.existsByCodeAndOwnerIsNull(premises.getCode())
+                : premisesRepository.existsByCodeAndOwnerId(premises.getCode(), ownerId);
+        if (exists) {
             throw new IllegalArgumentException(
                     "Помещение с кодом " + premises.getCode() + " уже существует");
         }
+        premises.setOwner(workspaceContext.effectiveOwner());
         return premisesRepository.save(premises);
     }
 
@@ -122,6 +150,14 @@ public class PremisesService {
     @Transactional
     public Premises update(Long id, Premises premises) {
         Premises existing = findById(id);
+        Long ownerId = workspaceContext.effectiveOwnerId();
+        boolean duplicateCode = ownerId == null
+                ? premisesRepository.existsByCodeAndOwnerIsNullAndIdNot(premises.getCode(), id)
+                : premisesRepository.existsByCodeAndOwnerIdAndIdNot(premises.getCode(), ownerId, id);
+        if (duplicateCode) {
+            throw new IllegalArgumentException(
+                    "Помещение с кодом " + premises.getCode() + " уже существует");
+        }
         existing.setCode(premises.getCode());
         existing.setBuilding(premises.getBuilding());
         existing.setFloor(premises.getFloor());

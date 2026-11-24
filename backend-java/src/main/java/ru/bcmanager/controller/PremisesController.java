@@ -27,8 +27,7 @@ import ru.bcmanager.domain.premises.Premises;
 import ru.bcmanager.domain.premises.RetailSpace;
 import ru.bcmanager.dto.DtoMapper;
 import ru.bcmanager.dto.PremisesDtos;
-import ru.bcmanager.repository.LeaseContractRepository;
-import ru.bcmanager.repository.PremisesRepository;
+import ru.bcmanager.service.ContractService;
 import ru.bcmanager.service.PremisesService;
 import ru.bcmanager.service.SpaceMatchingService;
 
@@ -46,9 +45,7 @@ public class PremisesController {
 
     private final PremisesService premisesService;
 
-    private final PremisesRepository premisesRepository;
-
-    private final LeaseContractRepository contractRepository;
+    private final ContractService contractService;
 
     private final SpaceMatchingService matchingService;
 
@@ -57,21 +54,18 @@ public class PremisesController {
     /**
      * Создать контроллер помещений.
      *
-     * @param premisesService    CRUD-сервис помещений
-     * @param premisesRepository репозиторий помещений
-     * @param contractRepository репозиторий договоров
-     * @param matchingService    сервис подбора
-     * @param mapper             преобразователь в DTO
+     * @param premisesService CRUD-сервис помещений
+     * @param contractService сервис договоров
+     * @param matchingService сервис подбора
+     * @param mapper          преобразователь в DTO
      */
     public PremisesController(
             PremisesService premisesService,
-            PremisesRepository premisesRepository,
-            LeaseContractRepository contractRepository,
+            ContractService contractService,
             SpaceMatchingService matchingService,
             DtoMapper mapper) {
         this.premisesService = premisesService;
-        this.premisesRepository = premisesRepository;
-        this.contractRepository = contractRepository;
+        this.contractService = contractService;
         this.matchingService = matchingService;
         this.mapper = mapper;
     }
@@ -168,11 +162,11 @@ public class PremisesController {
     @Operation(summary = "Умный подбор и ранжирование помещений")
     public PremisesDtos.MatchResponse match(
             @Valid @RequestBody PremisesDtos.MatchRequest request) {
-        List<Premises> premisesList = premisesRepository.findAll();
+        List<Premises> premisesList = premisesService.findAllInWorkspace();
         List<ru.bcmanager.service.SpaceMatchingService.MatchCandidate> candidates =
                 matchingService.matchAndRank(
                         premisesList,
-                        contractRepository.findAllWithDetails(),
+                        contractService.findAllInWorkspaceWithDetails(),
                         new SpaceMatchingService.MatchRequest(
                                 request.type(),
                                 request.targetArea(),

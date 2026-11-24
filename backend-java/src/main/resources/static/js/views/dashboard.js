@@ -40,7 +40,7 @@ function destroyCharts() {
  *
  * @param {HTMLElement} root контейнер контента
  */
-export async function renderDashboard(root) {
+export async function renderDashboard(root, { navigate } = {}) {
   root.innerHTML = `
     <div class="stack">
       <header class="page-header">
@@ -62,7 +62,7 @@ export async function renderDashboard(root) {
     </div>
   `;
 
-  root.querySelector('#reload-dashboard')?.addEventListener('click', () => loadDashboard(root));
+  root.querySelector('#reload-dashboard')?.addEventListener('click', () => loadDashboard(root, navigate));
   root.querySelector('#export-csv')?.addEventListener('click', async (event) => {
     const button = event.currentTarget;
     button.disabled = true;
@@ -76,15 +76,16 @@ export async function renderDashboard(root) {
     }
   });
 
-  await loadDashboard(root);
+  await loadDashboard(root, navigate);
 }
 
 /**
  * Загрузить и отрисовать KPI.
  *
  * @param {HTMLElement} root корневой элемент экрана
+ * @param {Function} [navigate] навигация по разделам
  */
-async function loadDashboard(root) {
+async function loadDashboard(root, navigate) {
   const body = root.querySelector('#dashboard-body');
   if (!body) {
     return;
@@ -108,6 +109,17 @@ async function loadDashboard(root) {
 
   body.innerHTML = dashboardMarkup(summary);
   initCharts(body, summary);
+
+  body.querySelectorAll('[data-go-route]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const targetRoute = btn.dataset.goRoute;
+      if (typeof navigate === 'function') {
+        navigate(targetRoute);
+      } else {
+        window.location.hash = `#/${targetRoute}`;
+      }
+    });
+  });
 
   body.querySelectorAll('[data-contract-id]').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -158,8 +170,33 @@ function dashboardMarkup(s) {
       </ul>`
     : emptyHtml('Истекающих договоров нет', 'В ближайшие 30 дней договоры не заканчиваются.');
 
+  const isWorkspaceEmpty = Number(s.totalAreaSqm) === 0;
+  const onboardingBanner = isWorkspaceEmpty
+    ? `
+      <section class="card onboarding-card">
+        <div class="onboarding-card-body">
+          <h3 class="card-title">Добро пожаловать в ваш личный кабинет BC-Manager</h3>
+          <p class="card-subtitle" style="margin-bottom: 14px;">
+            Ваш аккаунт пока пуст. Добавьте свои коммерческие помещения и компании-арендаторы —
+            все данные сохраняются в базе данных и будут доступны при каждом следующем входе.
+          </p>
+          <div class="page-header-actions">
+            <button class="btn btn-primary" type="button" data-go-route="premises">
+              ${renderIcon('plus')}
+              <span>Добавить помещение</span>
+            </button>
+            <button class="btn btn-secondary" type="button" data-go-route="tenants">
+              ${renderIcon('plus')}
+              <span>Добавить компанию-арендатора</span>
+            </button>
+          </div>
+        </div>
+      </section>`
+    : '';
+
   return `
     <div class="stack">
+      ${onboardingBanner}
       <div class="kpi-grid">
         <article class="kpi-card is-success">
           <p class="kpi-label">Загруженность БЦ</p>
@@ -186,7 +223,7 @@ function dashboardMarkup(s) {
       <div class="grid-2">
         <section class="card">
           <h3 class="card-title">Загруженность по типам помещений</h3>
-          <p class="card-subtitle">Доля занятой площади, %</p>
+          <p class="card-subtitle">Распределение площади и занятость по типам</p>
           <div class="chart-box">
             ${
               byType.length
@@ -232,22 +269,24 @@ function initCharts(body, summary) {
     return;
   }
 
-  const accent = '#6f4e37';
-  const accentSoft = 'rgba(201, 162, 126, 0.75)';
+  const accent = '#0f766e';
+  const accentSoft = 'rgba(148, 163, 184, 0.45)';
 
   const typeCanvas = body.querySelector('#chart-by-type');
   if (typeCanvas) {
     const rows = summary.byType || [];
+    const hasOccupied = rows.some((row) => Number(row.occupiedAreaSqm) > 0);
     const chart = new ChartCtor(typeCanvas, {
-      type: 'doughnut',
+      type: 'pie',
       data: {
         labels: rows.map((row) => labelOfType(row.type)),
         datasets: [
           {
-            label: 'Загруженность, %',
-            data: rows.map((row) => Number(row.occupancyPercent) || 0),
-            backgroundColor: ['#6f4e37', '#a8652f', '#c9a27e', '#e6d2b8'],
-            borderWidth: 0,
+            label: hasOccupied ? 'Занятая площадь, м²' : 'Общая площадь, м²',
+            data: rows.map((row) => Number(hasOccupied ? row.occupiedAreaSqm : row.totalAreaSqm) || 0),
+            backgroundColor: ['#0f766e', '#0284c7', '#6366f1', '#94a3b8'],
+            borderColor: '#ffffff',
+            borderWidth: 2,
           },
         ],
       },
@@ -258,7 +297,10 @@ function initCharts(body, summary) {
           legend: { position: 'bottom' },
           tooltip: {
             callbacks: {
-              label: (ctx) => `${ctx.label}: ${formatPercent(ctx.raw)}`,
+              label: (ctx) => {
+                const row = rows[ctx.dataIndex];
+                return `${ctx.label}: занято ${formatArea(row?.occupiedAreaSqm)} из ${formatArea(row?.totalAreaSqm)} (${formatPercent(row?.occupancyPercent)})`;
+              },
             },
           },
         },

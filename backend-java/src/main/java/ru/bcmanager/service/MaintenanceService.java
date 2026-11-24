@@ -34,6 +34,8 @@ public class MaintenanceService {
 
     private final DtoMapper mapper;
 
+    private final WorkspaceContextService workspaceContext;
+
     /**
      * Создать сервис заявок.
      *
@@ -42,18 +44,21 @@ public class MaintenanceService {
      * @param tenantRepository   репозиторий арендаторов
      * @param queueService       сервис приоритетной очереди
      * @param mapper             преобразователь в DTO
+     * @param workspaceContext   контекст рабочего пространства
      */
     public MaintenanceService(
             MaintenanceRequestRepository requestRepository,
             PremisesRepository premisesRepository,
             TenantRepository tenantRepository,
             MaintenanceQueueService queueService,
-            DtoMapper mapper) {
+            DtoMapper mapper,
+            WorkspaceContextService workspaceContext) {
         this.requestRepository = requestRepository;
         this.premisesRepository = premisesRepository;
         this.tenantRepository = tenantRepository;
         this.queueService = queueService;
         this.mapper = mapper;
+        this.workspaceContext = workspaceContext;
     }
 
     /**
@@ -65,7 +70,11 @@ public class MaintenanceService {
      */
     @Transactional(readOnly = true)
     public MaintenanceRequest findById(Long id) {
-        return requestRepository.findById(id).orElseThrow(() -> new java.util.NoSuchElementException(
+        Long ownerId = workspaceContext.effectiveOwnerId();
+        java.util.Optional<MaintenanceRequest> found = ownerId == null
+                ? requestRepository.findByIdSharedWithDetails(id)
+                : requestRepository.findByIdAndOwnerIdWithDetails(id, ownerId);
+        return found.orElseThrow(() -> new java.util.NoSuchElementException(
                 "Заявка с id=" + id + " не найдена"));
     }
 
@@ -76,7 +85,10 @@ public class MaintenanceService {
      */
     @Transactional(readOnly = true)
     public List<MaintenanceRequest> findAll() {
-        List<MaintenanceRequest> requests = new ArrayList<>(requestRepository.findAll());
+        Long ownerId = workspaceContext.effectiveOwnerId();
+        List<MaintenanceRequest> requests = new ArrayList<>(ownerId == null
+                ? requestRepository.findAllSharedWithDetails()
+                : requestRepository.findAllByOwnerIdWithDetails(ownerId));
         requests.sort((left, right) -> {
             int byCreated = left.getCreatedAt().compareTo(right.getCreatedAt());
             return byCreated != 0 ? byCreated : Long.compare(left.getId(), right.getId());
@@ -92,7 +104,11 @@ public class MaintenanceService {
      */
     @Transactional(readOnly = true)
     public List<MaintenanceQueueService.QueueEntry> prioritized(LocalDateTime now) {
-        return queueService.prioritize(requestRepository.findActive(), now);
+        Long ownerId = workspaceContext.effectiveOwnerId();
+        List<MaintenanceRequest> active = ownerId == null
+                ? requestRepository.findActiveSharedWithDetails()
+                : requestRepository.findActiveByOwnerIdWithDetails(ownerId);
+        return queueService.prioritize(active, now);
     }
 
     /**
@@ -114,17 +130,25 @@ public class MaintenanceService {
             String description,
             ru.bcmanager.domain.enums.MaintenanceCategory category,
             ru.bcmanager.domain.enums.MaintenancePriority priority) {
-        Premises premises = premisesRepository.findById(premisesId).orElseThrow(() ->
+        Long ownerId = workspaceContext.effectiveOwnerId();
+        java.util.Optional<Premises> foundPremises = ownerId == null
+                ? premisesRepository.findByIdAndOwnerIsNull(premisesId)
+                : premisesRepository.findByIdAndOwnerId(premisesId, ownerId);
+        Premises premises = foundPremises.orElseThrow(() ->
                 new java.util.NoSuchElementException(
                         "Помещение с id=" + premisesId + " не найдено"));
         Tenant tenant = null;
         if (tenantId != null) {
-            tenant = tenantRepository.findById(tenantId).orElseThrow(() ->
+            java.util.Optional<Tenant> foundTenant = ownerId == null
+                    ? tenantRepository.findByIdAndOwnerIsNull(tenantId)
+                    : tenantRepository.findByIdAndOwnerId(tenantId, ownerId);
+            tenant = foundTenant.orElseThrow(() ->
                     new java.util.NoSuchElementException(
                             "Арендатор с id=" + tenantId + " не найден"));
         }
         MaintenanceRequest request = new MaintenanceRequest(
                 premises, tenant, title, description, category, priority);
+        request.setOwner(workspaceContext.effectiveOwner());
         return requestRepository.save(request);
     }
 

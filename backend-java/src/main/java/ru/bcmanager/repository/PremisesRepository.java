@@ -76,4 +76,20 @@ public interface PremisesRepository extends JpaRepository<Premises, Long> {
      * @return список помещений
      */
     List<Premises> findByFloor(Integer floor);
+
+    List<Premises> findByOwnerIsNull();
+
+    List<Premises> findByOwnerId(Long ownerId);
+
+    Optional<Premises> findByIdAndOwnerIsNull(Long id);
+
+    Optional<Premises> findByIdAndOwnerId(Long id, Long ownerId);
+
+    boolean existsByCodeAndOwnerIsNull(String code);
+
+    boolean existsByCodeAndOwnerId(String code, Long ownerId);
+
+    boolean existsByCodeAndOwnerIsNullAndIdNot(String code, Long id);
+
+    boolean existsByCodeAndOwnerIdAndIdNot(String code, Long ownerId, Long id);
 }

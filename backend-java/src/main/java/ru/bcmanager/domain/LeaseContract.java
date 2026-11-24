@@ -32,7 +32,11 @@ public class LeaseContract {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "contract_number", nullable = false, unique = true, length = 40)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
+    private User owner;
+
+    @Column(name = "contract_number", nullable = false, length = 40)
     private String contractNumber;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -142,6 +146,14 @@ public class LeaseContract {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public User getOwner() {
+        return owner;
+    }
+
+    public void setOwner(User owner) {
+        this.owner = owner;
     }
 
     public String getContractNumber() {

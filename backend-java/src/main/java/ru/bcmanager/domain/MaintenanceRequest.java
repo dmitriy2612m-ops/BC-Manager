@@ -46,6 +46,10 @@ public class MaintenanceRequest implements Prioritizable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
+    private User owner;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "premises_id", nullable = false)
     private Premises premises;
@@ -171,6 +175,14 @@ public class MaintenanceRequest implements Prioritizable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public User getOwner() {
+        return owner;
+    }
+
+    public void setOwner(User owner) {
+        this.owner = owner;
     }
 
     public Premises getPremises() {

@@ -50,4 +50,38 @@ public interface TenantRepository extends JpaRepository<Tenant, Long> {
      * @return список активных контрагентов
      */
     List<Tenant> findByActiveTrue();
+
+    List<Tenant> findByOwnerIsNull();
+
+    List<Tenant> findByOwnerId(Long ownerId);
+
+    Optional<Tenant> findByIdAndOwnerIsNull(Long id);
+
+    Optional<Tenant> findByIdAndOwnerId(Long id, Long ownerId);
+
+    boolean existsByInnAndOwnerIsNull(String inn);
+
+    boolean existsByInnAndOwnerId(String inn, Long ownerId);
+
+    boolean existsByInnAndOwnerIsNullAndIdNot(String inn, Long id);
+
+    boolean existsByInnAndOwnerIdAndIdNot(String inn, Long ownerId, Long id);
+
+    @Query(
+            """
+            SELECT t FROM Tenant t
+            WHERE t.owner IS NULL
+              AND (LOWER(t.companyName) LIKE LOWER(CONCAT('%', :query, '%'))
+                   OR t.inn LIKE CONCAT('%', :query, '%'))
+            """)
+    List<Tenant> searchShared(@Param("query") String query);
+
+    @Query(
+            """
+            SELECT t FROM Tenant t
+            WHERE t.owner.id = :ownerId
+              AND (LOWER(t.companyName) LIKE LOWER(CONCAT('%', :query, '%'))
+                   OR t.inn LIKE CONCAT('%', :query, '%'))
+            """)
+    List<Tenant> searchByOwnerId(@Param("ownerId") Long ownerId, @Param("query") String query);
 }

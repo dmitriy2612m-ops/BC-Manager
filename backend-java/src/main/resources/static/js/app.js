@@ -77,19 +77,29 @@ let currentRoute = null;
 /** Навигация по приложению. */
 let navigate = () => {};
 
-/** Показать экран входа и сбросить состояние приложения. */
+/** Показать экран входа/приветствия и сбросить состояние приложения. */
 function showLogin() {
   currentRoute = null;
   viewRoot.innerHTML = '';
   appShell.hidden = true;
   loginScreen.hidden = false;
+  document.title = 'BC-Manager — Управление бизнес-центром';
   closeModalIfOpen();
   renderLogin({
-    onSubmit: async (username, password) => {
-      const data = await apiClient.api.login(username, password);
+    onSubmit: async (mode, username, password) => {
+      const data = mode === 'register'
+        ? await apiClient.api.register(username, password)
+        : await apiClient.api.login(username, password);
       apiClient.saveSession(data);
+      if (mode === 'register') {
+        window.history.replaceState(null, '', `#/${DEFAULT_ROUTE}`);
+      }
       loginScreen.hidden = true;
-      bootstrapSession();
+      window.scrollTo({ top: 0, behavior: 'auto' });
+      await bootstrapSession();
+      if (mode === 'register') {
+        toast('Аккаунт создан! Добавьте помещения и арендаторов.', 'success');
+      }
     },
   });
 }

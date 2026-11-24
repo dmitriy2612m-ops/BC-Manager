@@ -18,13 +18,18 @@ public class TenantService {
 
     private final TenantRepository tenantRepository;
 
+    private final WorkspaceContextService workspaceContext;
+
     /**
      * Создать сервис арендаторов.
      *
      * @param tenantRepository репозиторий арендаторов
+     * @param workspaceContext контекст рабочего пространства
      */
-    public TenantService(TenantRepository tenantRepository) {
+    public TenantService(
+            TenantRepository tenantRepository, WorkspaceContextService workspaceContext) {
         this.tenantRepository = tenantRepository;
+        this.workspaceContext = workspaceContext;
     }
 
     /**
@@ -35,9 +40,18 @@ public class TenantService {
      */
     @Transactional(readOnly = true)
     public List<Tenant> findAll(String query) {
-        List<Tenant> tenants = query == null || query.isBlank()
-                ? tenantRepository.findAll()
-                : tenantRepository.search(query.trim());
+        Long ownerId = workspaceContext.effectiveOwnerId();
+        List<Tenant> tenants;
+        if (query == null || query.isBlank()) {
+            tenants = ownerId == null
+                    ? tenantRepository.findByOwnerIsNull()
+                    : tenantRepository.findByOwnerId(ownerId);
+        } else {
+            String trimmed = query.trim();
+            tenants = ownerId == null
+                    ? tenantRepository.searchShared(trimmed)
+                    : tenantRepository.searchByOwnerId(ownerId, trimmed);
+        }
         tenants.sort((left, right) -> left.getCompanyName().compareToIgnoreCase(right.getCompanyName()));
         return tenants;
     }
@@ -51,7 +65,11 @@ public class TenantService {
      */
     @Transactional(readOnly = true)
     public Tenant findById(Long id) {
-        return tenantRepository.findById(id).orElseThrow(() -> new java.util.NoSuchElementException(
+        Long ownerId = workspaceContext.effectiveOwnerId();
+        java.util.Optional<Tenant> found = ownerId == null
+                ? tenantRepository.findByIdAndOwnerIsNull(id)
+                : tenantRepository.findByIdAndOwnerId(id, ownerId);
+        return found.orElseThrow(() -> new java.util.NoSuchElementException(
                 "Арендатор с id=" + id + " не найден"));
     }
 
@@ -66,10 +84,15 @@ public class TenantService {
         if (!Tenant.isValidInn(tenant.getInn())) {
             throw new IllegalArgumentException("ИНН должен состоять из 10 или 12 цифр");
         }
-        if (tenantRepository.existsByInn(tenant.getInn())) {
+        Long ownerId = workspaceContext.effectiveOwnerId();
+        boolean exists = ownerId == null
+                ? tenantRepository.existsByInnAndOwnerIsNull(tenant.getInn())
+                : tenantRepository.existsByInnAndOwnerId(tenant.getInn(), ownerId);
+        if (exists) {
             throw new IllegalArgumentException(
                     "Арендатор с ИНН " + tenant.getInn() + " уже существует");
         }
+        tenant.setOwner(workspaceContext.effectiveOwner());
         return tenantRepository.save(tenant);
     }
 
@@ -85,6 +108,14 @@ public class TenantService {
         Tenant existing = findById(id);
         if (!Tenant.isValidInn(tenant.getInn())) {
             throw new IllegalArgumentException("ИНН должен состоять из 10 или 12 цифр");
+        }
+        Long ownerId = workspaceContext.effectiveOwnerId();
+        boolean duplicateInn = ownerId == null
+                ? tenantRepository.existsByInnAndOwnerIsNullAndIdNot(tenant.getInn(), id)
+                : tenantRepository.existsByInnAndOwnerIdAndIdNot(tenant.getInn(), ownerId, id);
+        if (duplicateInn) {
+            throw new IllegalArgumentException(
+                    "Арендатор с ИНН " + tenant.getInn() + " уже существует");
         }
         existing.setCompanyName(tenant.getCompanyName());
         existing.setInn(tenant.getInn());

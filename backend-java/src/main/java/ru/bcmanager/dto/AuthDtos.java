@@ -1,6 +1,7 @@
 package ru.bcmanager.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 /**
@@ -24,6 +25,25 @@ public final class AuthDtos {
 
             @NotBlank(message = "Пароль обязателен")
             @Size(max = 100, message = "Пароль не длиннее 100 символов")
+            String password) {
+    }
+
+    /**
+     * Запрос регистрации нового пользователя (только логин и пароль).
+     *
+     * @param username логин (3–50 символов)
+     * @param password пароль (4–100 символов)
+     */
+    public record RegisterRequest(
+            @NotBlank(message = "Логин обязателен")
+            @Size(min = 3, max = 50, message = "Логин должен содержать от 3 до 50 символов")
+            @Pattern(
+                    regexp = "^[\\p{L}\\p{N}_.-]+$",
+                    message = "Логин может содержать буквы, цифры, точки, дефисы и подчёркивания")
+            String username,
+
+            @NotBlank(message = "Пароль обязателен")
+            @Size(min = 4, max = 100, message = "Пароль должен содержать от 4 до 100 символов")
             String password) {
     }
 

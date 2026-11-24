@@ -26,20 +26,38 @@ public class PaymentService {
 
     private final BillingService billingService;
 
+    private final WorkspaceContextService workspaceContext;
+
     /**
      * Создать сервис платежей.
      *
      * @param paymentRepository  репозиторий платежей
      * @param contractRepository репозиторий договоров
      * @param billingService     сервис биллинга
+     * @param workspaceContext   контекст рабочего пространства
      */
     public PaymentService(
             PaymentRepository paymentRepository,
             LeaseContractRepository contractRepository,
-            BillingService billingService) {
+            BillingService billingService,
+            WorkspaceContextService workspaceContext) {
         this.paymentRepository = paymentRepository;
         this.contractRepository = contractRepository;
         this.billingService = billingService;
+        this.workspaceContext = workspaceContext;
+    }
+
+    /**
+     * Все платежи текущего рабочего пространства.
+     *
+     * @return список платежей с подгруженными договорами
+     */
+    @Transactional(readOnly = true)
+    public List<Payment> findAllInWorkspace() {
+        Long ownerId = workspaceContext.effectiveOwnerId();
+        return ownerId == null
+                ? paymentRepository.findAllSharedWithContract()
+                : paymentRepository.findAllByOwnerIdWithContract(ownerId);
     }
 
     /**
@@ -54,11 +72,14 @@ public class PaymentService {
     @Transactional(readOnly = true)
     public List<Payment> findAll(
             Long contractId, PaymentStatus status, boolean overdueOnly, LocalDate asOf) {
+        Long ownerId = workspaceContext.effectiveOwnerId();
         List<Payment> source;
         if (contractId != null) {
-            source = paymentRepository.findByContractIdOrderByPeriodNumberAsc(contractId);
+            source = ownerId == null
+                    ? paymentRepository.findByContractIdSharedOrderByPeriodNumberAsc(contractId)
+                    : paymentRepository.findByContractIdAndOwnerIdOrderByPeriodNumberAsc(contractId, ownerId);
         } else {
-            source = paymentRepository.findAll();
+            source = findAllInWorkspace();
         }
 
         List<Payment> result = new ArrayList<>();
@@ -90,7 +111,11 @@ public class PaymentService {
      */
     @Transactional(readOnly = true)
     public Payment findById(Long id) {
-        return paymentRepository.findById(id).orElseThrow(() -> new java.util.NoSuchElementException(
+        Long ownerId = workspaceContext.effectiveOwnerId();
+        java.util.Optional<Payment> found = ownerId == null
+                ? paymentRepository.findByIdSharedWithContract(id)
+                : paymentRepository.findByIdAndOwnerIdWithContract(id, ownerId);
+        return found.orElseThrow(() -> new java.util.NoSuchElementException(
                 "Платёж с id=" + id + " не найден"));
     }
 
@@ -122,9 +147,11 @@ public class PaymentService {
      */
     @Transactional
     public BillingService.DebtReport recalculatePenalties(LocalDate calculationDate) {
-        List<Payment> payments = paymentRepository.findAll();
-        List<ru.bcmanager.domain.LeaseContract> contracts =
-                contractRepository.findAllWithDetails();
+        Long ownerId = workspaceContext.effectiveOwnerId();
+        List<Payment> payments = findAllInWorkspace();
+        List<ru.bcmanager.domain.LeaseContract> contracts = ownerId == null
+                ? contractRepository.findAllSharedWithDetails()
+                : contractRepository.findAllByOwnerIdWithDetails(ownerId);
 
         BillingService.DebtReport report =
                 billingService.calculatePenaltiesAndDebt(payments, calculationDate, contracts);

@@ -6,15 +6,19 @@ import jakarta.persistence.DiscriminatorType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Objects;
+import ru.bcmanager.domain.User;
 import ru.bcmanager.domain.contracts.Exportable;
 import ru.bcmanager.domain.contracts.RentCalculable;
 import ru.bcmanager.domain.enums.PremisesStatus;
@@ -50,7 +54,11 @@ public abstract class Premises implements RentCalculable, Exportable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "code", nullable = false, unique = true, length = 30)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
+    private User owner;
+
+    @Column(name = "code", nullable = false, length = 30)
     private String code;
 
     @Column(name = "building", nullable = false, length = 50)
@@ -233,6 +241,14 @@ public abstract class Premises implements RentCalculable, Exportable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public User getOwner() {
+        return owner;
+    }
+
+    public void setOwner(User owner) {
+        this.owner = owner;
     }
 
     public String getCode() {

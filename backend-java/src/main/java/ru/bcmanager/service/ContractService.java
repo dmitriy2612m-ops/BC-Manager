@@ -40,6 +40,8 @@ public class ContractService {
 
     private final SpaceMatchingService matchingService;
 
+    private final WorkspaceContextService workspaceContext;
+
     /**
      * Создать сервис договоров.
      *
@@ -48,18 +50,34 @@ public class ContractService {
      * @param paymentRepository  репозиторий платежей
      * @param pricingService     сервис расчёта аренды
      * @param matchingService    сервис проверки конфликтов
+     * @param workspaceContext   контекст рабочего пространства
      */
     public ContractService(
             LeaseContractRepository contractRepository,
             PremisesRepository premisesRepository,
             PaymentRepository paymentRepository,
             LeasePricingService pricingService,
-            SpaceMatchingService matchingService) {
+            SpaceMatchingService matchingService,
+            WorkspaceContextService workspaceContext) {
         this.contractRepository = contractRepository;
         this.premisesRepository = premisesRepository;
         this.paymentRepository = paymentRepository;
         this.pricingService = pricingService;
         this.matchingService = matchingService;
+        this.workspaceContext = workspaceContext;
+    }
+
+    /**
+     * Все договоры текущего рабочего пространства с подгруженными связями.
+     *
+     * @return список договоров
+     */
+    @Transactional(readOnly = true)
+    public List<LeaseContract> findAllInWorkspaceWithDetails() {
+        Long ownerId = workspaceContext.effectiveOwnerId();
+        return ownerId == null
+                ? contractRepository.findAllSharedWithDetails()
+                : contractRepository.findAllByOwnerIdWithDetails(ownerId);
     }
 
     /**
@@ -74,7 +92,7 @@ public class ContractService {
     public List<LeaseContract> findAll(
             ContractStatus status, Long tenantId, Long premisesId) {
         List<LeaseContract> result = new ArrayList<>();
-        for (LeaseContract contract : contractRepository.findAllWithDetails()) {
+        for (LeaseContract contract : findAllInWorkspaceWithDetails()) {
             if (status != null && contract.getStatus() != status) {
                 continue;
             }
@@ -102,7 +120,11 @@ public class ContractService {
      */
     @Transactional(readOnly = true)
     public LeaseContract findById(Long id) {
-        return contractRepository.findByIdWithDetails(id).orElseThrow(() ->
+        Long ownerId = workspaceContext.effectiveOwnerId();
+        java.util.Optional<LeaseContract> found = ownerId == null
+                ? contractRepository.findByIdSharedWithDetails(id)
+                : contractRepository.findByIdAndOwnerIdWithDetails(id, ownerId);
+        return found.orElseThrow(() ->
                 new java.util.NoSuchElementException("Договор с id=" + id + " не найден"));
     }
 
@@ -114,7 +136,11 @@ public class ContractService {
      */
     @Transactional(readOnly = true)
     public List<Payment> schedule(Long contractId) {
-        return paymentRepository.findByContractIdOrderByPeriodNumberAsc(contractId);
+        findById(contractId);
+        Long ownerId = workspaceContext.effectiveOwnerId();
+        return ownerId == null
+                ? paymentRepository.findByContractIdSharedOrderByPeriodNumberAsc(contractId)
+                : paymentRepository.findByContractIdAndOwnerIdOrderByPeriodNumberAsc(contractId, ownerId);
     }
 
     /**
@@ -135,7 +161,7 @@ public class ContractService {
             Long excludeContractId) {
         Premises premises = findPremises(premisesId);
         SpaceMatchingService.ConflictResult conflict = matchingService.checkLeaseConflict(
-                contractRepository.findAllWithDetails(),
+                findAllInWorkspaceWithDetails(),
                 premisesId,
                 startDate,
                 endDate,
@@ -205,7 +231,7 @@ public class ContractService {
         }
         Premises premises = findPremises(premisesId);
         SpaceMatchingService.ConflictResult conflict = matchingService.checkLeaseConflict(
-                contractRepository.findAllWithDetails(),
+                findAllInWorkspaceWithDetails(),
                 premisesId,
                 startDate,
                 endDate,
@@ -213,7 +239,11 @@ public class ContractService {
         if (conflict.hasConflict()) {
             throw new IllegalStateException(missingConflictMessage(premises, conflict));
         }
-        if (contractRepository.existsByContractNumber(contractNumber)) {
+        Long ownerId = workspaceContext.effectiveOwnerId();
+        boolean numberExists = ownerId == null
+                ? contractRepository.existsByContractNumberAndOwnerIsNull(contractNumber)
+                : contractRepository.existsByContractNumberAndOwnerId(contractNumber, ownerId);
+        if (numberExists) {
             throw new IllegalArgumentException(
                     "Договор с номером " + contractNumber + " уже существует");
         }
@@ -232,6 +262,7 @@ public class ContractService {
         contract.setDiscountPercent(calculation.discountPercent());
         contract.setDepositAmount(calculation.totalMonthly());
         contract.setCreatedBy(createdBy);
+        contract.setOwner(workspaceContext.effectiveOwner());
 
         LeaseContract saved = contractRepository.save(contract);
 
@@ -282,7 +313,11 @@ public class ContractService {
     }
 
     private Premises findPremises(Long premisesId) {
-        return premisesRepository.findById(premisesId).orElseThrow(() ->
+        Long ownerId = workspaceContext.effectiveOwnerId();
+        java.util.Optional<Premises> found = ownerId == null
+                ? premisesRepository.findByIdAndOwnerIsNull(premisesId)
+                : premisesRepository.findByIdAndOwnerId(premisesId, ownerId);
+        return found.orElseThrow(() ->
                 new java.util.NoSuchElementException(
                         "Помещение с id=" + premisesId + " не найдено"));
     }

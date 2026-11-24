@@ -5,31 +5,32 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.bcmanager.domain.User;
+import ru.bcmanager.domain.enums.Role;
 import ru.bcmanager.dto.AuthDtos;
 import ru.bcmanager.repository.UserRepository;
 import ru.bcmanager.security.JwtService;
 
 /**
- * Аутентификация по логину и паролю (Plan.md, раздел 5.1).
- *
- * <p>Контроллер только делегирует проверку учётных данных менеджеру
- * аутентификации и выпускает JWT; бизнес-логики в нём нет.
+ * Аутентификация и регистрация по логину и паролю (Plan.md, раздел 5.1).
  */
 @RestController
 @RequestMapping("/api/v1/auth")
-@Tag(name = "Аутентификация", description = "Вход в систему и данные текущего пользователя")
+@Tag(name = "Аутентификация", description = "Вход, регистрация и данные текущего пользователя")
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
@@ -38,20 +39,25 @@ public class AuthController {
 
     private final UserRepository userRepository;
 
+    private final PasswordEncoder passwordEncoder;
+
     /**
      * Создать контроллер аутентификации.
      *
      * @param authenticationManager менеджер проверки учётных данных
      * @param jwtService            сервис выпуска токенов
      * @param userRepository        репозиторий пользователей
+     * @param passwordEncoder       кодировщик паролей
      */
     public AuthController(
             AuthenticationManager authenticationManager,
             JwtService jwtService,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder) {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /**
@@ -65,9 +71,10 @@ public class AuthController {
     @Operation(summary = "Вход в систему", security = {})
     public ResponseEntity<AuthDtos.LoginResponse> login(
             @Valid @RequestBody AuthDtos.LoginRequest request) {
+        String username = request.username().trim();
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        request.username(), request.password()));
+                        username, request.password()));
         User user = requireUser(authentication.getName());
         String token = jwtService.generateToken(user);
         return ResponseEntity.ok(new AuthDtos.LoginResponse(
@@ -76,6 +83,40 @@ public class AuthController {
                 user.getUsername(),
                 user.getFullName(),
                 user.getRole().name(),
+                jwtService.getExpirationMinutes()));
+    }
+
+    /**
+     * Регистрация нового пользователя (логин и пароль, без почты).
+     * Создаётся пустой персональный аккаунт с полными правами управления своим БЦ.
+     *
+     * @param request логин и пароль
+     * @return JWT и данные созданного пользователя
+     */
+    @PostMapping("/register")
+    @SecurityRequirements
+    @Transactional
+    @Operation(summary = "Регистрация нового пользователя", security = {})
+    public ResponseEntity<AuthDtos.LoginResponse> register(
+            @Valid @RequestBody AuthDtos.RegisterRequest request) {
+        String username = request.username().trim();
+        if (userRepository.existsByUsernameIgnoreCase(username)) {
+            throw new IllegalStateException("Логин «" + username + "» уже занят");
+        }
+        User user = new User(
+                username,
+                passwordEncoder.encode(request.password()),
+                username,
+                Role.ADMIN);
+        user.setPersonalWorkspace(true);
+        User saved = userRepository.save(user);
+        String token = jwtService.generateToken(saved);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new AuthDtos.LoginResponse(
+                token,
+                "Bearer",
+                saved.getUsername(),
+                saved.getFullName(),
+                saved.getRole().name(),
                 jwtService.getExpirationMinutes()));
     }
 
